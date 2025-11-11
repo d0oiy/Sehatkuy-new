@@ -6,109 +6,165 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Admin | Sehatkuy</title>
 
-  <!-- Bootstrap CSS -->
+  <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
-      background-color: #f8f9fa;
+      background-color: #f4f6f9;
+      font-family: 'Inter', sans-serif;
     }
+
     .navbar {
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background: linear-gradient(90deg, #007bff, #00b4d8);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
     }
+
+    .navbar-brand {
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
     .card {
-      transition: all 0.2s ease-in-out;
+      border: none;
+      border-radius: 12px;
+      transition: all 0.25s ease-in-out;
     }
+
     .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      transform: translateY(-6px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
     }
+
     .chart-container {
       position: relative;
-      height: 400px;
-      width: 100%;
+      height: 420px;
+      margin-top: 2rem;
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    }
+
+    .btn-dashboard {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    .activity-list li {
+      background-color: #fff;
+      border-left: 5px solid #0d6efd;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      text-align: center;
+      color: #888;
+      font-size: 0.9rem;
+      padding: 20px 0;
+      border-top: 1px solid #ddd;
+      margin-top: 3rem;
     }
   </style>
 </head>
 
 <body>
   <!-- Navbar -->
-  <nav class="navbar navbar-dark bg-primary">
+  <nav class="navbar navbar-dark px-3">
     <div class="container-fluid d-flex justify-content-between align-items-center">
-      <span class="navbar-brand mb-0 h1">Sehatkuy Admin Panel</span>
+      <span class="navbar-brand mb-0 fs-5">Sehatkuy Admin Panel</span>
       <div>
-        <a href="#" class="btn btn-light btn-sm me-2">Pengaturan</a>
-        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
+        <a href="{% url 'activity_log' %}" class="btn btn-light btn-sm me-2"><i class="bi bi-gear"></i> Pengaturan</a>
+        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</a>
       </div>
     </div>
   </nav>
 
-  <!-- Dashboard -->
+  <!-- Main Content -->
   <div class="container my-5">
-    <h2 class="mb-4 text-center fw-bold">Dashboard Statistik</h2>
+    <h2 class="fw-bold text-center mb-4">Dashboard Statistik Sehatkuy</h2>
 
     <!-- Statistik Cards -->
     <div class="row g-4 text-center">
-      <div class="col-md-3">
-        <div class="card shadow-sm p-3 border-0 bg-white">
+      <div class="col-md-3 col-6">
+        <div class="card p-3 shadow-sm">
           <h6 class="text-muted">Total Pengguna</h6>
           <h3 class="fw-bold text-primary">{{ total_users|default:0 }}</h3>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm p-3 border-0 bg-white">
+      <div class="col-md-3 col-6">
+        <div class="card p-3 shadow-sm">
           <h6 class="text-muted">Pasien</h6>
           <h3 class="fw-bold text-success">{{ total_patients|default:0 }}</h3>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm p-3 border-0 bg-white">
+      <div class="col-md-3 col-6">
+        <div class="card p-3 shadow-sm">
           <h6 class="text-muted">Dokter</h6>
           <h3 class="fw-bold text-info">{{ total_doctors|default:0 }}</h3>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm p-3 border-0 bg-white">
+      <div class="col-md-3 col-6">
+        <div class="card p-3 shadow-sm">
           <h6 class="text-muted">Konsultasi</h6>
           <h3 class="fw-bold text-warning">{{ total_consultations|default:0 }}</h3>
         </div>
       </div>
     </div>
 
-    <!-- Chart -->
-    <div class="chart-container mt-5">
+    <!-- Grafik Data -->
+    <div class="chart-container">
       <canvas id="dataChart"></canvas>
     </div>
 
     <!-- Quick Access -->
-    <div class="mt-5">
-      <h4 class="fw-bold mb-3">Aksi Cepat</h4>
-      <div class="d-flex flex-wrap gap-3">
-        <a href="{% url 'user_list' %}" class="btn btn-outline-primary"><i class="bi bi-people"></i> Kelola Pengguna</a>
-        <a href="#" class="btn btn-outline-success"><i class="bi bi-person-badge"></i> Kelola Dokter</a>
-        <a href="#" class="btn btn-outline-warning"><i class="bi bi-chat-dots"></i> Lihat Konsultasi</a>
-        <a href="#" class="btn btn-outline-secondary"><i class="bi bi-gear"></i> Pengaturan Sistem</a>
-      </div>
+    <div class="d-flex flex-wrap gap-3 justify-content-center mt-5">
+      <a href="{% url 'user_list' %}" class="btn btn-outline-primary btn-dashboard">
+        <i class="bi bi-people-fill"></i> Kelola Pengguna
+      </a>
+      <a href="{% url 'doctor_list' %}" class="btn btn-outline-success btn-dashboard">
+        <i class="bi bi-person-badge-fill"></i> Kelola Dokter
+      </a>
+      <a href="{% url 'consultation_list' %}" class="btn btn-outline-warning btn-dashboard">
+        <i class="bi bi-chat-left-text-fill"></i> Lihat Konsultasi
+      </a>
+      <a href="{% url 'activity_log' %}" class="btn btn-outline-secondary btn-dashboard">
+        <i class="bi bi-gear-fill"></i> Pengaturan Sistem
+      </a>
     </div>
 
-    <!-- Activity Log (dummy) -->
+    <!-- Aktivitas Terbaru -->
     <div class="mt-5">
-      <h4 class="fw-bold mb-3">Aktivitas Terbaru</h4>
-      <ul class="list-group shadow-sm">
-        <li class="list-group-item">👤 Admin login ke sistem</li>
-        <li class="list-group-item">🩺 Dr. Rudi menambahkan jadwal konsultasi</li>
-        <li class="list-group-item">🧍 Pasien Andi mendaftar akun baru</li>
-        <li class="list-group-item">💬 Konsultasi baru ditambahkan oleh Dr. Lina</li>
+      <h4 class="fw-bold mb-3">🕒 Aktivitas Terbaru</h4>
+      <ul class="list-group shadow-sm activity-list">
+        {% if activity_logs %}
+          {% for log in activity_logs %}
+            <li class="list-group-item">{{ log }}</li>
+          {% endfor %}
+        {% else %}
+          <li class="list-group-item text-muted">Belum ada aktivitas terbaru.</li>
+        {% endif %}
       </ul>
     </div>
   </div>
 
+  <!-- Footer -->
+  <footer>
+    © 2025 <strong>Sehatkuy</strong> — Sistem Informasi Layanan Kesehatan Digital.
+  </footer>
+
   <!-- Chart Script -->
   <script>
     const ctx = document.getElementById('dataChart');
-
     new Chart(ctx, {
       type: 'bar',
       data: {
@@ -121,6 +177,7 @@
             {{ total_consultations|default:"0" }}
           ],
           backgroundColor: ['#0d6efd', '#20c997', '#ffc107'],
+          borderRadius: 8,
           borderWidth: 1
         }]
       },
@@ -131,21 +188,20 @@
           title: {
             display: true,
             text: 'Statistik Sistem Sehatkuy',
-            font: { size: 18 }
+            font: { size: 18, weight: 'bold' }
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { precision: 0 }
+            ticks: { stepSize: 1, precision: 0 }
           }
         }
       }
     });
   </script>
 
-  <!-- Bootstrap JS & Icons -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 </body>
 </html>

@@ -12,7 +12,10 @@
   <nav class="navbar navbar-dark bg-primary">
     <div class="container-fluid">
       <span class="navbar-brand">Kelola Pengguna</span>
-      <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm">Kembali</a>
+      <div class="d-flex gap-2">
+        <a href="{% url 'user_create' %}">Tambah User</a>
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm">Kembali</a>
+      </div>
     </div>
   </nav>
 
@@ -30,6 +33,7 @@
             <th>Email</th>
             <th>Role</th>
             <th>Tanggal Bergabung</th>
+            <th>Aksi</th>
           </tr>
         </thead>
         <tbody id="userTable">
@@ -40,10 +44,14 @@
             <td>{{ user.email }}</td>
             <td>{{ user.role|default:"-" }}</td>
             <td>{{ user.date_joined|date:"d M Y" }}</td>
+            <td class="text-center">
+              <a href="{% url 'user_edit' user.id %}" class="btn btn-warning btn-sm">Edit</a>
+              <a href="{% url 'user_delete' user.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Hapus pengguna ini?')">Hapus</a>
+            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center text-muted">Belum ada pengguna.</td>
+            <td colspan="6" class="text-center text-muted">Belum ada pengguna.</td>
           </tr>
           {% endfor %}
         </tbody>

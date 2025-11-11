@@ -1,7 +1,13 @@
 from django.db import models
+from users.models import CustomUser
 
 class Doctor(models.Model):
-    full_name = models.CharField(max_length=100)
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'dokter'},
+        related_name='doctor_profile'
+    )
     specialization = models.CharField(max_length=100)
     phone = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(unique=True)
@@ -9,4 +15,4 @@ class Doctor(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.full_name
+        return f"{self.user.username} - {self.specialization}"

@@ -12,7 +12,10 @@
   <nav class="navbar navbar-dark bg-success">
     <div class="container-fluid">
       <span class="navbar-brand">Kelola Dokter</span>
-      <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm">Kembali</a>
+      <div class="d-flex gap-2">
+        <a href="{% url 'doctor_add' %}" class="btn btn-light btn-sm text-success fw-semibold">+ Tambah Dokter</a>
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm">Kembali</a>
+      </div>
     </div>
   </nav>
 
@@ -30,6 +33,7 @@
             <th>Email</th>
             <th>Spesialisasi</th>
             <th>Tanggal Bergabung</th>
+            <th>Aksi</th>
           </tr>
         </thead>
         <tbody id="doctorTable">
@@ -40,10 +44,14 @@
             <td>{{ doctor.user.email }}</td>
             <td>{{ doctor.specialization|default:"-" }}</td>
             <td>{{ doctor.user.date_joined|date:"d M Y" }}</td>
+            <td class="text-center">
+              <a href="{% url 'doctor_edit' doctor.id %}" class="btn btn-warning btn-sm">Edit</a>
+              <a href="{% url 'doctor_delete' doctor.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Hapus data dokter ini?')">Hapus</a>
+            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center text-muted">Belum ada data dokter.</td>
+            <td colspan="6" class="text-center text-muted">Belum ada data dokter.</td>
           </tr>
           {% endfor %}
         </tbody>
