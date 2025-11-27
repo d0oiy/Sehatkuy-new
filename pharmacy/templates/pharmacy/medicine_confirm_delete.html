@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Hapus Obat{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Konfirmasi Penghapusan</h4>
+                </div>
+                
+                <div class="card-body">
+                    <p class="lead">Apakah Anda yakin ingin menghapus obat berikut?</p>
+                    
+                    <div class="alert alert-warning">
+                        <h5>{{ medicine.name }}</h5>
+                        <p class="mb-0">Dosis: {{ medicine.dosage }} {{ medicine.unit }}</p>
+                    </div>
+                    
+                    <p class="text-danger">
+                        <strong>⚠️ Tindakan ini tidak dapat dibatalkan!</strong>
+                    </p>
+                </div>
+                
+                <div class="card-footer">
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash"></i> Ya, Hapus Obat
+                        </button>
+                    </form>
+                    
+                    <a href="{% url 'pharmacy:medicine_detail' medicine.pk %}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-times"></i> Batal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

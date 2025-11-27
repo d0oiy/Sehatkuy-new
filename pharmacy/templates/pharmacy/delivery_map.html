@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Peta Pengiriman - {{ order.order_number }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map {
+        height: 500px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .info-box {
+        background: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+    }
+    
+    .marker-label {
+        font-weight: bold;
+        background: white;
+        padding: 3px 8px;
+        border-radius: 3px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">
+                <i class="fas fa-map-marker-alt"></i> Peta Pengiriman
+                <small class="text-muted">{{ order.order_number }}</small>
+            </h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Map Container -->
+            <div id="map" class="mb-4"></div>
+            
+            <!-- Informasi Rute -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Detail Rute Pengiriman</h5>
+                </div>
+                
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-store text-success"></i> Apotek (Pickup)</h6>
+                            <p>
+                                <strong>Latitude:</strong> {{ delivery.pickup_latitude }}<br>
+                                <strong>Longitude:</strong> {{ delivery.pickup_longitude }}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-home text-danger"></i> Alamat Tujuan</h6>
+                            <p>
+                                <strong>Latitude:</strong> {{ delivery.delivery_latitude }}<br>
+                                <strong>Longitude:</strong> {{ delivery.delivery_longitude }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Status Pengiriman -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Status Pengiriman</h5>
+                </div>
+                
+                <div class="card-body">
+                    <p>
+                        <strong>Status:</strong><br>
+                        {% if delivery.status == 'waiting' %}
+                            <span class="badge badge-secondary">Menunggu Pengantar</span>
+                        {% elif delivery.status == 'in_transit' %}
+                            <span class="badge badge-warning">Dalam Pengiriman</span>
+                            <div class="spinner-border spinner-border-sm text-warning mt-2" role="status">
+                                <span class="sr-only">Sedang mengirim...</span>
+                            </div>
+                        {% elif delivery.status == 'delivered' %}
+                            <span class="badge badge-success">Terkirim</span>
+                        {% else %}
+                            <span class="badge badge-danger">{{ delivery.get_status_display }}</span>
+                        {% endif %}
+                    </p>
+                    
+                    {% if delivery.courier %}
+                    <p>
+                        <strong>Pengantar:</strong><br>
+                        {{ delivery.courier.first_name }} {{ delivery.courier.last_name }}<br>
+                        <small class="text-muted">{{ delivery.courier.username }}</small>
+                    </p>
+                    {% endif %}
+                    
+                    {% if delivery.estimated_arrival %}
+                    <p>
+                        <strong>Estimasi Tiba:</strong><br>
+                        {{ delivery.estimated_arrival|date:"d M Y H:i" }}
+                    </p>
+                    {% endif %}
+                    
+                    {% if delivery.actual_arrival %}
+                    <p>
+                        <strong>Waktu Tiba Aktual:</strong><br>
+                        {{ delivery.actual_arrival|date:"d M Y H:i" }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Info Pesanan -->
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Informasi Pesanan</h5>
+                </div>
+                
+                <div class="card-body">
+                    <p>
+                        <strong>Nomor Pesanan:</strong><br>
+                        {{ order.order_number }}
+                    </p>
+                    
+                    <p>
+                        <strong>Alamat Pengiriman:</strong><br>
+                        {{ order.delivery_address }}
+                    </p>
+                    
+                    <p>
+                        <strong>Telepon:</strong><br>
+                        {{ order.delivery_phone }}
+                    </p>
+                    
+                    <p>
+                        <strong>Total Pesanan:</strong><br>
+                        <h5 class="text-success">{{ order.total_price|rupiah }}</h5>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Aksi Admin -->
+            {% if request.user.is_staff %}
+            <div class="card shadow mt-4 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Admin Control</h5>
+                </div>
+                
+                <div class="card-body">
+                    <a href="{% url 'pharmacy:delivery_update' delivery.pk %}" class="btn btn-warning btn-block mb-2">
+                        <i class="fas fa-edit"></i> Update Delivery
+                    </a>
+                    
+                    <a href="{% url 'pharmacy:delivery_status_update' delivery.pk %}" class="btn btn-info btn-block">
+                        <i class="fas fa-sync"></i> Update Status
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col">
+            <a href="{% url 'pharmacy:order_detail' order.pk %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali ke Pesanan
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Data dari template
+    const deliveryData = {{ delivery_json|safe }};
+    
+    // Default center (tengah dua lokasi)
+    const pickupLat = parseFloat('{{ delivery.pickup_latitude }}');
+    const pickupLng = parseFloat('{{ delivery.pickup_longitude }}');
+    const deliveryLat = parseFloat('{{ delivery.delivery_latitude }}');
+    const deliveryLng = parseFloat('{{ delivery.delivery_longitude }}');
+    
+    const centerLat = (pickupLat + deliveryLat) / 2;
+    const centerLng = (pickupLng + deliveryLng) / 2;
+    
+    // Inisialisasi map
+    const map = L.map('map').setView([centerLat, centerLng], 13);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+    }).addTo(map);
+    
+    // Marker untuk Apotek (Pickup)
+    const pickupMarker = L.marker([pickupLat, pickupLng], {
+        icon: L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        })
+    })
+    .bindPopup('<div class="marker-label">📍 Apotek<br>Pickup</div>')
+    .addTo(map);
+    
+    // Marker untuk Alamat Tujuan
+    const deliveryMarker = L.marker([deliveryLat, deliveryLng], {
+        icon: L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        })
+    })
+    .bindPopup('<div class="marker-label">🏠 Alamat Tujuan<br>{{ order.delivery_address|truncatewords:3 }}</div>')
+    .addTo(map);
+    
+    // Gambar garis dari Apotek ke Tujuan
+    const line = L.polyline([
+        [pickupLat, pickupLng],
+        [deliveryLat, deliveryLng]
+    ], {
+        color: '#007bff',
+        weight: 3,
+        opacity: 0.7,
+        dashArray: '5, 5'
+    }).addTo(map);
+    
+    // Fit bounds ke kedua marker
+    map.fitBounds([
+        [pickupLat, pickupLng],
+        [deliveryLat, deliveryLng]
+    ], { padding: [50, 50] });
+    
+    // Auto-refresh status setiap 10 detik jika sedang dalam pengiriman
+    const deliveryStatus = '{{ delivery.status }}';
+    if (deliveryStatus === 'in_transit') {
+        setInterval(function() {
+            fetch('/pharmacy/api/delivery/{{ delivery.pk }}/location/')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Delivery status updated:', data);
+                })
+                .catch(error => console.error('Error:', error));
+        }, 10000);
+    }
+});
+</script>
+{% endblock %}

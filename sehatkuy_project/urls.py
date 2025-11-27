@@ -16,16 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('home.urls')),  # arahkan ke landing page
     path('users/', include('users.urls')),
     path('consultation/', include('consultation.urls')),
-    path('adminpanel/', include('adminpanel.urls')),
+    path('adminpanel/', include(('adminpanel.urls', 'adminpanel'), namespace='adminpanel')),
     path('doctors/', include('doctors.urls')),
     path('appointments/', include('appointments.urls')),
-
-
-
+    path('pharmacy/', include('pharmacy.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

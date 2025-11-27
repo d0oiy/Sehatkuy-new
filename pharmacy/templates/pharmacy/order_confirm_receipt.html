@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Konfirmasi Penerimaan Obat{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="display-1 text-warning mb-3">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <h2 class="card-title">Konfirmasi Penerimaan Obat</h2>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <strong>Pesanan:</strong> {{ order.order_number }}
+                    </div>
+
+                    <div class="order-details mb-4">
+                        <h5 class="mb-3">Detail Pesanan:</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <td class="text-muted" style="width: 30%;">Status Pesanan:</td>
+                                <td>
+                                    <span class="badge bg-warning">Dalam Pengiriman</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Alamat Pengiriman:</td>
+                                <td>{{ order.delivery_address }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Nomor Telepon:</td>
+                                <td>{{ order.delivery_phone }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Total Pesanan:</td>
+                                <td class="fw-bold">Rp {{ order.total_price|stringformat:",.0f" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-success" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-check-circle"></i> Obat Sudah Diterima?
+                        </h6>
+                        <p class="mb-0">
+                            Jika Anda telah menerima obat dengan kondisi baik, silakan klik tombol di bawah untuk mengkonfirmasi penerimaan.
+                        </p>
+                    </div>
+
+                    <div class="items-list mb-4">
+                        <h6 class="mb-3">Daftar Obat:</h6>
+                        <div class="list-group">
+                            {% for item in order.items.all %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ item.medicine.name }}</h6>
+                                        <p class="text-muted small mb-0">
+                                            {{ item.quantity }} {{ item.medicine.unit }} × Rp {{ item.price_at_time|stringformat:",.0f" }}
+                                        </p>
+                                    </div>
+                                    <span class="fw-bold">Rp {{ item.subtotal|stringformat:",.0f" }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <form method="post" class="d-grid gap-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check"></i> Konfirmasi Penerimaan Obat
+                        </button>
+                        <a href="{% url 'pharmacy:order_detail' order.pk %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-arrow-left"></i> Kembali
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .order-details {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .items-list {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}

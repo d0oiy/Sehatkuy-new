@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Pesanan Obat{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Pesanan Obat</h1>
+            
+            <a href="{% url 'pharmacy:order_create' %}" class="btn btn-success mb-3">
+                <i class="fas fa-plus"></i> Pesanan Baru
+            </a>
+            
+            <!-- Status Filter -->
+            <div class="mb-4">
+                <form method="get" class="form-inline">
+                    <select name="status" class="form-control mr-2">
+                        <option value="">Semua Status</option>
+                        {% for value, label in statuses %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-info">Filter</button>
+                </form>
+            </div>
+            
+            {% if orders %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover shadow-sm">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>No. Pesanan</th>
+                            <th>Pasien</th>
+                            <th>Status</th>
+                            <th>Total Harga</th>
+                            <th>Tanggal</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td><strong>{{ order.order_number }}</strong></td>
+                            <td>{{ order.patient.first_name }} {{ order.patient.last_name }}</td>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                    <span class="badge badge-warning">{{ order.get_status_display }}</span>
+                                {% elif order.status == 'confirmed' %}
+                                    <span class="badge badge-info">{{ order.get_status_display }}</span>
+                                {% elif order.status == 'processing' or order.status == 'ready' %}
+                                    <span class="badge badge-primary">{{ order.get_status_display }}</span>
+                                {% elif order.status == 'shipped' %}
+                                    <span class="badge badge-warning">{{ order.get_status_display }}</span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="badge badge-success">{{ order.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{{ order.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ order.total_price|rupiah }}</td>
+                            <td>{{ order.created_at|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'pharmacy:order_detail' order.pk %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> Detail
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Belum ada pesanan.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.badge {
+    padding: 5px 10px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5;
+}
+</style>
+{% endblock %}

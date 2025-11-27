@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard Dokter | Sehatkuy</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="#">Sehatkuy - Dokter</a>
+    <div class="ms-auto">
+      <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container my-4">
+  <h3>Halo, Dr. {{ request.user.username }}</h3>
+  {% if user.is_authenticated and user.role == 'dokter' %}
+  <div class="mb-3">
+    <a href="{% url 'pharmacy:medicine_create' %}" class="btn btn-primary" title="Tambahkan obat baru ke katalog" data-bs-toggle="tooltip" aria-label="Tambah Obat">
+      <!-- simple inline plus icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg me-1" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5V7.5H14a.5.5 0 0 1 0 1H8.5V14a.5.5 0 0 1-1 0V8.5H2a.5.5 0 0 1 0-1h5.5V1.5A.5.5 0 0 1 8 1z"/>
+      </svg>
+      Tambah Obat
+    </a>
+    <small class="text-muted d-block mt-1">Klik untuk menambahkan obat baru ke katalog (tersedia untuk dokter).</small>
+  </div>
+  {% endif %}
+  <div class="row mt-3">
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-header bg-info text-white">Konsultasi Terkait Anda</div>
+        <div class="card-body">
+          {% if consultations %}
+            <ul class="list-group">
+              {% for c in consultations %}
+                <li class="list-group-item">
+                  <strong>{{ c.patient.username }}</strong> — {{ c.complaint|truncatechars:60 }}
+                  <div class="text-muted small">{{ c.date|date:"d M Y" }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">Belum ada konsultasi yang tercatat untuk Anda.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-header bg-success text-white">Pesanan Obat Terbaru</div>
+        <div class="card-body">
+          {% if orders %}
+            <table class="table table-sm">
+              <thead><tr><th>No</th><th>Order</th><th>Pasien</th><th>Status</th></tr></thead>
+              <tbody>
+                {% for o in orders %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ o.order_number }}</td>
+                  <td>{{ o.patient.username }}</td>
+                  <td>{{ o.get_status_display }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p class="text-muted">Belum ada pesanan.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a href="/" class="btn btn-secondary">Kembali</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 # requirements.txt untuk proyek Django "sehatkuy"
 
 Django==5.2.7
+djangorestframework==3.14.0
 mysqlclient==2.2.4
 asgiref==3.8.1
 sqlparse==0.5.1

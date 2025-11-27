@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Pengiriman{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Update Informasi Pengiriman</h4>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Pesanan:</strong> {{ delivery.order.order_number }}<br>
+                        <strong>Pasien:</strong> {{ delivery.order.patient.first_name }} {{ delivery.order.patient.last_name }}
+                    </div>
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <h5>Pengantar</h5>
+                        <div class="form-group">
+                            <label for="{{ form.courier.id_for_label }}">{{ form.courier.label }}</label>
+                            {{ form.courier }}
+                            {% if form.courier.errors %}
+                            <div class="invalid-feedback d-block">{{ form.courier.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="mt-4">Status</h5>
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="mt-4">Lokasi Apotek (Pickup)</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.pickup_latitude.id_for_label }}">{{ form.pickup_latitude.label }}</label>
+                                    {{ form.pickup_latitude }}
+                                    {% if form.pickup_latitude.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.pickup_latitude.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.pickup_longitude.id_for_label }}">{{ form.pickup_longitude.label }}</label>
+                                    {{ form.pickup_longitude }}
+                                    {% if form.pickup_longitude.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.pickup_longitude.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mt-4">Lokasi Tujuan (Pasien)</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.delivery_latitude.id_for_label }}">{{ form.delivery_latitude.label }}</label>
+                                    {{ form.delivery_latitude }}
+                                    {% if form.delivery_latitude.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.delivery_latitude.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.delivery_longitude.id_for_label }}">{{ form.delivery_longitude.label }}</label>
+                                    {{ form.delivery_longitude }}
+                                    {% if form.delivery_longitude.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.delivery_longitude.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mt-4">Waktu Estimasi Tiba</h5>
+                        <div class="form-group">
+                            <label for="{{ form.estimated_arrival.id_for_label }}">{{ form.estimated_arrival.label }}</label>
+                            {{ form.estimated_arrival }}
+                            {% if form.estimated_arrival.errors %}
+                            <div class="invalid-feedback d-block">{{ form.estimated_arrival.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> Simpan
+                            </button>
+                            <a href="{% url 'pharmacy:delivery_map' delivery.order.pk %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Batal
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

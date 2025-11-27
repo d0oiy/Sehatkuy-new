@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Status Pengiriman{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Update Status Pengiriman</h4>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Pesanan:</strong> {{ delivery.order.order_number }}<br>
+                        <strong>Status Saat Ini:</strong> {{ delivery.get_status_display }}
+                    </div>
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}"><strong>{{ form.status.label }}</strong></label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.actual_arrival.id_for_label }}"><strong>{{ form.actual_arrival.label }}</strong></label>
+                            {{ form.actual_arrival }}
+                            <small class="form-text text-muted">Isi jika pengiriman sudah selesai</small>
+                            {% if form.actual_arrival.errors %}
+                            <div class="invalid-feedback d-block">{{ form.actual_arrival.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-success btn-block btn-lg">
+                                <i class="fas fa-sync"></i> Update Status
+                            </button>
+                        </div>
+                        
+                        <a href="{% url 'pharmacy:delivery_map' delivery.order.pk %}" class="btn btn-secondary btn-block">
+                            <i class="fas fa-arrow-left"></i> Kembali
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}{{ medicine.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h1 class="card-title">{{ medicine.name }}</h1>
+                    
+                    <hr>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Informasi Obat</h5>
+                            <p>
+                                <strong>Dosis:</strong><br>
+                                {{ medicine.dosage }} {{ medicine.unit }}
+                            </p>
+                            <p>
+                                <strong>Harga:</strong><br>
+                                <span class="h4 text-success">{{ medicine.price|rupiah }}</span>
+                            </p>
+                            <p>
+                                <strong>Stok:</strong><br>
+                                {% if medicine.stock > 0 %}
+                                    <span class="badge badge-success badge-lg">
+                                        {{ medicine.stock }} tersedia
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-danger badge-lg">Habis</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>Ditambahkan oleh</h5>
+                            <p>
+                                <strong>Admin/Dokter:</strong> {{ medicine.created_by.first_name }}<br>
+                                <strong>Tanggal:</strong> {{ medicine.created_at|date:"d M Y H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5>Deskripsi</h5>
+                    <p>{{ medicine.description }}</p>
+                    
+                    {% if medicine.side_effects %}
+                    <hr>
+                    
+                    <h5>Efek Samping</h5>
+                    <div class="alert alert-warning">
+                        {{ medicine.side_effects }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer">
+                    <a href="{% url 'pharmacy:medicine_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </a>
+                    
+                    {% if request.user.is_staff or request.user.is_superuser or request.user.role == 'dokter' %}
+                    <a href="{% url 'pharmacy:medicine_update' medicine.pk %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'pharmacy:medicine_delete' medicine.pk %}" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Hapus
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Pesan Obat Ini</h5>
+                </div>
+                <div class="card-body">
+                    {% if medicine.stock > 0 %}
+                    <p>Harga: <strong>{{ medicine.price|rupiah }}</strong></p>
+                    <p class="text-muted text-sm">Obat ini tersedia dan siap dipesan.</p>
+                    <a href="{% url 'pharmacy:order_create' %}" class="btn btn-success btn-block">
+                        <i class="fas fa-shopping-cart"></i> Buat Pesanan
+                    </a>
+                    {% else %}
+                    <p class="text-danger">Maaf, obat ini sedang tidak tersedia.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge-lg {
+    padding: 8px 15px;
+    font-size: 1em;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+</style>
+{% endblock %}

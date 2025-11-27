@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load currency_filters %}
+
+{% block title %}Konfirmasi Pesanan{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow border-success">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Konfirmasi Pesanan</h4>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Pesanan Anda akan dikonfirmasi dan akan diproses oleh admin.
+                    </div>
+                    
+                    <h5>Ringkasan Pesanan</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Nomor Pesanan:</strong></td>
+                            <td>{{ order.order_number }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Item:</strong></td>
+                            <td>{{ order.items.count }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Harga:</strong></td>
+                            <td>
+                                <h5 class="text-success mb-0">{{ order.total_price|rupiah }}</h5>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Alamat Pengiriman:</strong></td>
+                            <td>{{ order.delivery_address }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nomor Telepon:</strong></td>
+                            <td>{{ order.delivery_phone }}</td>
+                        </tr>
+                    </table>
+                    
+                    <hr>
+                    
+                    <h5>Item Pesanan</h5>
+                    <ul>
+                        {% for item in order.items.all %}
+                        <li>
+                            {{ item.medicine.name }} ({{ item.medicine.dosage }}) x{{ item.quantity }} = 
+                            {{ item.subtotal|rupiah }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <strong>⚠️ Peringatan:</strong> Setelah dikonfirmasi, pesanan tidak dapat diubah. 
+                        Silakan periksa kembali data Anda sebelum mengkonfirmasi.
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check"></i> Ya, Konfirmasi Pesanan
+                        </button>
+                    </form>
+                    
+                    <a href="{% url 'pharmacy:order_items' order.pk %}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Kembali Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

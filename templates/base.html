@@ -13,8 +13,29 @@
     <a class="navbar-brand fw-bold" href="/">Sehatkuy</a>
     <ul class="navbar-nav ms-auto">
       <li class="nav-item"><a href="/users/patient/dashboard/" class="nav-link">Dashboard</a></li>
-      <li class="nav-item"><a href="{% url 'consultation_create' %}" class="nav-link">Konsultasi</a></li>
-      <li class="nav-item"><a href="{% url 'consultation_list' %}" class="nav-link">Riwayat</a></li>
+      <li class="nav-item"><a href="{% url 'consultation:consultation_create' %}" class="nav-link">Konsultasi</a></li>
+      <li class="nav-item"><a href="{% url 'consultation:consultation_list' %}" class="nav-link">Riwayat</a></li>
+
+      {% if request.user.is_authenticated %}
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="pharmacyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Obat & Pesan
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="pharmacyDropdown">
+          <li><a class="dropdown-item" href="{% url 'pharmacy:medicine_list' %}">Lihat Obat</a></li>
+          <li><a class="dropdown-item" href="{% url 'pharmacy:order_create' %}">Pesan Sekarang</a></li>
+          <li><a class="dropdown-item" href="{% url 'pharmacy:order_list' %}">Pesanan Saya</a></li>
+          {% if request.user.is_staff or request.user.is_superuser or request.user.role == 'dokter' %}
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'pharmacy:medicine_list' %}">Kelola Obat</a></li>
+          {% endif %}
+          {% if request.user.is_staff or request.user.is_superuser %}
+          <li><a class="dropdown-item" href="{% url 'pharmacy:patient_orders' %}">Kelola Pesanan (Admin)</a></li>
+          {% endif %}
+        </ul>
+      </li>
+      {% endif %}
+
       <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link text-danger">Logout</a></li>
     </ul>
   </div>
@@ -30,5 +51,14 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Initialize Bootstrap tooltips globally
+  document.addEventListener('DOMContentLoaded', function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+  });
+</script>
 </body>
 </html>

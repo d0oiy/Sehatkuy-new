@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from users.models import CustomUser
 from doctors.models import Doctor
 from consultation.models import Consultation  # ← pastikan model Consultation sudah ada
+from pharmacy.models import MedicineOrder
+from pharmacy.forms import MedicineForm
 from .models import ActivityLog
 from .forms import UserForm, DoctorForm
 
@@ -20,9 +22,24 @@ def is_admin(user):
 @login_required
 @user_passes_test(is_admin)
 def admin_dashboard(request):
+    # Handle medicine form submission
+    if request.method == 'POST':
+        form = MedicineForm(request.POST)
+        if form.is_valid():
+            medicine = form.save(commit=False)
+            medicine.created_by = request.user
+            medicine.save()
+            messages.success(request, f'Obat "{medicine.name}" berhasil ditambahkan.')
+            return redirect('adminpanel:admin_dashboard')
+    else:
+        form = MedicineForm()
+    
     total_users = CustomUser.objects.count()
     total_doctors = Doctor.objects.count()
     total_consultations = Consultation.objects.count() if 'consultations' in globals() else 0
+    total_patients = CustomUser.objects.filter(role='pasien').count()
+    recent_consultations = Consultation.objects.select_related('patient').order_by('-date')[:12]
+    recent_orders = MedicineOrder.objects.select_related('patient').prefetch_related('items__medicine').order_by('-created_at')[:12]
     activities = ActivityLog.objects.order_by('-timestamp')[:5]
 
     context = {
@@ -30,7 +47,11 @@ def admin_dashboard(request):
         'total_users': total_users,
         'total_doctors': total_doctors,
         'total_consultations': total_consultations,
+        'total_patients': total_patients,
         'activities': activities,
+        'recent_consultations': recent_consultations,
+        'recent_orders': recent_orders,
+        'form': form,
     }
     return render(request, 'adminpanel/dashboard.html', context)
 

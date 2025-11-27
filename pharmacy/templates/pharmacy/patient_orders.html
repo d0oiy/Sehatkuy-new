@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% load humanize %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{% url 'adminpanel:admin_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="status" class="mr-2">Filter Status:</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="">Semua Status</option>
+                        {% for value, label in statuses %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <a href="?" class="btn btn-outline-secondary ml-2">
+                    <i class="fas fa-redo"></i> Reset
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-clipboard-list"></i> Daftar Pesanan ({{ orders.count }})
+            </h5>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>No. Pesanan</th>
+                        <th>Pasien</th>
+                        <th>Obat</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Tanggal Pesanan</th>
+                        <th>Diterima</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if orders %}
+                        {% for order in orders %}
+                        <tr>
+                            <td>
+                                <strong>{{ order.order_number }}</strong>
+                            </td>
+                            <td>
+                                <a href="{% url 'pharmacy:patient_orders_detail' order.patient.id %}">
+                                    {{ order.patient.first_name }} {{ order.patient.last_name }}
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ order.patient.email }}</small>
+                            </td>
+                            <td>
+                                {% if order.items.all %}
+                                    <ul style="margin: 0; padding-left: 20px; list-style: none;">
+                                        {% for item in order.items.all %}
+                                        <li>
+                                            <strong>{{ item.medicine.name }}</strong> ({{ item.medicine.dosage }})
+                                            <br>
+                                            <small class="text-muted">Jumlah: {{ item.quantity }} {{ item.medicine.unit }}</small>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                    <span class="badge badge-warning">Menunggu Konfirmasi</span>
+                                {% elif order.status == 'confirmed' %}
+                                    <span class="badge badge-info">Dikonfirmasi</span>
+                                {% elif order.status == 'processing' %}
+                                    <span class="badge badge-primary">Sedang Diproses</span>
+                                {% elif order.status == 'ready' %}
+                                    <span class="badge badge-info">Siap Dikirim</span>
+                                {% elif order.status == 'shipped' %}
+                                    <span class="badge badge-warning">Dalam Pengiriman</span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="badge badge-success">Terkirim</span>
+                                {% elif order.status == 'received' %}
+                                    <span class="badge bg-success">Diterima Pasien</span>
+                                {% elif order.status == 'completed' %}
+                                    <span class="badge bg-dark">Selesai</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{{ order.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                <strong>{{ order.total_price|rupiah }}</strong>
+                            </td>
+                            <td>
+                                <small>{{ order.created_at|date:"d M Y H:i" }}</small>
+                            </td>
+                            <td>
+                                {% if order.received_at %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <small>{{ order.received_at|date:"d M Y H:i" }}</small>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'pharmacy:admin_order_detail' order.pk %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> Lihat
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-inbox text-muted" style="font-size: 2em;"></i>
+                                <p class="mt-2 text-muted">Tidak ada pesanan yang sesuai dengan filter</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    {% if orders %}
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Pesanan</h6>
+                    <h2 class="mb-0">{{ orders.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Nilai</h6>
+                    <h4 class="mb-0">
+                        {% load humanize %}
+                        Rp {{ orders|dictsort:"total_price"|length }}
+                    </h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h6 class="text-muted">Belum Diterima</h6>
+                    <h2 class="mb-0" style="color: #ff6b6b;">
+                        {{ orders|dictsort:"received_at"|length }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h6 class="text-muted">Sudah Diterima</h6>
+                    <h2 class="mb-0" style="color: #51cf66;">
+                        {% with confirmed=orders|dictsort:"received_at" %}
+                            0
+                        {% endwith %}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .badge {
+        padding: 0.5em 0.75em;
+        font-size: 0.85em;
+    }
+</style>
+{% endblock %}

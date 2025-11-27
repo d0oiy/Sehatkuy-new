@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
+<style>
+    #delivery-map {
+        height: 400px;
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .map-info {
+        background-color: #e8f4f8;
+        padding: 12px;
+        border-left: 4px solid #0066cc;
+        margin-bottom: 15px;
+        border-radius: 4px;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">{{ title }}</h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Map Section -->
+                        <div class="form-group">
+                            <label><i class="bi bi-geo-alt-fill"></i> Pilih Lokasi Pengiriman di Peta</label>
+                            <div class="map-info">
+                                <small><strong>Instruksi:</strong> Klik pada peta untuk memilih lokasi pengiriman. Koordinat akan otomatis terisi.</small>
+                            </div>
+                            <div id="delivery-map"></div>
+                            <small class="form-text text-muted">Klik pada peta untuk menandai lokasi pengiriman Anda</small>
+                        </div>
+
+                        <!-- Hidden fields for coordinates -->
+                        <input type="hidden" id="delivery-latitude" name="delivery_latitude">
+                        <input type="hidden" id="delivery-longitude" name="delivery_longitude">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Latitude:</label>
+                                    <input type="text" id="display-latitude" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Longitude:</label>
+                                    <input type="text" id="display-longitude" class="form-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.delivery_address.id_for_label }}">{{ form.delivery_address.label }}</label>
+                            {{ form.delivery_address }}
+                            <small class="form-text text-muted">Masukkan alamat lengkap pengiriman Anda</small>
+                            {% if form.delivery_address.errors %}
+                            <div class="invalid-feedback d-block">{{ form.delivery_address.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.delivery_phone.id_for_label }}">{{ form.delivery_phone.label }}</label>
+                            {{ form.delivery_phone }}
+                            <small class="form-text text-muted">Nomor telepon untuk menghubungi pengantar</small>
+                            {% if form.delivery_phone.errors %}
+                            <div class="invalid-feedback d-block">{{ form.delivery_phone.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                            <small class="form-text text-muted">Catatan tambahan (opsional)</small>
+                            {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Setelah membuat pesanan, Anda dapat menambahkan obat dari daftar.
+                        </div>
+                        
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-plus"></i> Buat Pesanan
+                            </button>
+                            <a href="{% url 'pharmacy:order_list' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Batal
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize map centered on Indonesia (default)
+    const map = L.map('delivery-map').setView([-6.2088, 106.8456], 11);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    let deliveryMarker = null;
+
+    // Handle map clicks
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        // Set hidden input values
+        document.getElementById('delivery-latitude').value = lat.toFixed(6);
+        document.getElementById('delivery-longitude').value = lng.toFixed(6);
+        
+        // Update display values
+        document.getElementById('display-latitude').value = lat.toFixed(6);
+        document.getElementById('display-longitude').value = lng.toFixed(6);
+        
+        // Remove old marker if exists
+        if (deliveryMarker) {
+            map.removeLayer(deliveryMarker);
+        }
+        
+        // Add new marker
+        deliveryMarker = L.marker([lat, lng], {
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).bindPopup('Lokasi Pengiriman Anda')
+         .addTo(map)
+         .openPopup();
+    });
+
+    // Geolocation button (optional - can be added later)
+    function getCurrentLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                map.setView([lat, lng], 15);
+                
+                // Set the values
+                document.getElementById('delivery-latitude').value = lat.toFixed(6);
+                document.getElementById('delivery-longitude').value = lng.toFixed(6);
+                document.getElementById('display-latitude').value = lat.toFixed(6);
+                document.getElementById('display-longitude').value = lng.toFixed(6);
+            });
+        }
+    }
+</script>
+
+{% endblock %}

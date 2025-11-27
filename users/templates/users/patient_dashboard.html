@@ -1,4 +1,5 @@
 {% load static %}
+{% load currency_filters %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -40,6 +41,24 @@
     </div>
 
     <!-- Menu Navigasi -->
+    {% if user.is_authenticated and user.role == 'pasien' %}
+    <div class="mb-3 d-flex gap-2">
+      <a href="{% url 'pharmacy:medicine_list' %}" class="btn btn-outline-success" title="Lihat daftar obat yang tersedia" data-bs-toggle="tooltip" aria-label="Lihat Obat">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list me-1" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M2.5 12.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+        Lihat Obat
+      </a>
+      <a href="{% url 'pharmacy:order_create' %}" class="btn btn-success" title="Buat pesanan obat baru" data-bs-toggle="tooltip" aria-label="Pesan Sekarang">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart-plus me-1" viewBox="0 0 16 16">
+          <path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5V11.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/>
+          <path d="M0 1.5A.5.5 0 0 1 .5 1h1a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .49.598l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.49-.402L1.61 1.607 1.11 1H.5a.5.5 0 0 1-.5-.5zM4.14 5l1.25 5h7.22l1.25-5H4.14z"/>
+        </svg>
+        Pesan Sekarang
+      </a>
+    </div>
+    <small class="text-muted">Gunakan tombol untuk melihat katalog obat atau langsung membuat pesanan.</small>
+    {% endif %}
     <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">Profil Saya</button>
@@ -47,6 +66,9 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="consult-tab" data-bs-toggle="tab" data-bs-target="#consult" type="button" role="tab">Konsultasi</button>
       </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">Pemesanan Obat</button>
+        </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="appointment-tab" data-bs-toggle="tab" data-bs-target="#appointment" type="button" role="tab">Janji Temu</button>
       </li>
@@ -78,8 +100,38 @@
         <div class="card p-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5>Daftar Konsultasi</h5>
-            <a href="{% url 'consultation_create' %}" class="btn btn-success btn-sm">+ Buat Konsultasi</a>
+            <a href="{% url 'consultation:consultation_create' %}" class="btn btn-success btn-sm">+ Buat Konsultasi</a>
           </div>
+
+            <!-- Tab Pemesanan Obat -->
+            <div class="tab-pane fade" id="orders" role="tabpanel">
+              <div class="card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5>Daftar Pemesanan Obat</h5>
+                  <a href="{% url 'pharmacy:order_create' %}" class="btn btn-success btn-sm">+ Buat Pesanan</a>
+                </div>
+                {% if orders and orders.count > 0 %}
+                  <table class="table table-striped">
+                    <thead>
+                      <tr><th>No. Pesanan</th><th>Tanggal</th><th>Status</th><th>Total</th><th>Aksi</th></tr>
+                    </thead>
+                    <tbody>
+                      {% for o in orders %}
+                      <tr>
+                        <td>{{ o.order_number }}</td>
+                        <td>{{ o.created_at|date:"d M Y H:i" }}</td>
+                        <td>{{ o.get_status_display }}</td>
+                        <td>{{ o.total_price|rupiah }}</td>
+                        <td><a href="{% url 'pharmacy:order_detail' o.pk %}" class="btn btn-sm btn-primary">Lihat</a></td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                {% else %}
+                  <p class="text-muted text-center">Belum ada pemesanan obat.</p>
+                {% endif %}
+              </div>
+            </div>
           {% if consultations %}
             <table class="table table-striped">
               <thead>
