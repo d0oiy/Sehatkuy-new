@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Daftar Poliklinik</title>
+
+    <!-- CSS khusus poliklinik (standalone) -->
+    <link rel="stylesheet" href="{% static 'css/poliklinik.css' %}">
+</head>
+
+<body>
+<div class="poli-wrapper">
+
+    <div class="poli-mini-nav">
+        <a href="/">← Kembali ke Beranda</a>
+    </div>
+
+    <h1 class="poli-title">Daftar Poliklinik</h1>
+    <p class="poli-subtitle">Pilih layanan poliklinik yang tersedia di Puskesmas</p>
+
+<div class="poli-wrapper">
+    <div class="poli-grid">
+        {% for poli in polikliniks %}
+        <div class="poli-card">
+
+            <div>
+                <div class="poli-card-header">
+                    <h3 class="poli-name">{{ poli.name }}</h3>
+
+                    {% if poli.is_currently_open %}
+                        <span class="status-badge open">Buka</span>
+                    {% else %}
+                        <span class="status-badge closed">Tutup</span>
+                    {% endif %}
+                </div>
+
+                <p class="poli-desc">{{ poli.description|truncatewords:18 }}</p>
+            </div>
+
+            <a class="btn-detail" href="{{ poli.get_absolute_url }}">
+                Lihat Detail
+            </a>
+
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,61 @@
+{% extends 'adminpanel/base.html' %}
+{% block content %}
+<h2 class="mb-4">{{ title }}</h2>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label">Akun Dokter</label>
+    {{ form.user }}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Poliklinik</label>
+    {{ form.poliklinik }}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Spesialisasi</label>
+    {{ form.specialization }}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Phone</label>
+    {{ form.phone }}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Email</label>
+    {{ form.email }}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Alamat</label>
+    {{ form.address }}
+  </div>
+
+  <button class="btn btn-primary">Simpan</button>
+  <a href="{% url 'doctor_list' %}" class="btn btn-secondary">Batal</a>
+</form>
+
+<script>
+const specializationMap = {
+  "poli-umum":"Dokter Umum",
+  "poli-kia":"Dokter KIA",
+  "poli-gigi":"Dokter Gigi",
+  "poli-lansia":"Dokter Umum (Lansia)"
+};
+
+document.addEventListener('DOMContentLoaded', function(){
+  const poli = document.getElementById('poliSelect');
+  const spec = document.getElementById('specializationField');
+  if(poli && spec) {
+    poli.addEventListener('change', function(){
+      const txt = poli.options[poli.selectedIndex].text.trim().toLowerCase().replace(/\s+/g,'-');
+      spec.value = specializationMap[txt] || '';
+    });
+  }
+});
+</script>
+
+{% endblock %}

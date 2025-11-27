@@ -1,0 +1,183 @@
+{% load static dictkey %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ poli.name }} | Detail Poliklinik</title>
+    <link rel="stylesheet" href="{% static 'css/poliklinik-detail.css' %}">
+
+    <style>
+        .slot-list {
+            margin-top: 10px;
+            border-left: 2px solid #4CAF50;
+            padding-left: 15px;
+        }
+        .slot-item {
+            margin-bottom: 6px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .slot-item span {
+            color: #333;
+        }
+        .slot-btn {
+            padding: 3px 8px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            text-decoration: none;
+        }
+        .slot-btn.disabled {
+            background: #aaa;
+            pointer-events: none;
+        }
+        .doctor-card {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            background: #fafafa;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="poli-detail-wrapper">
+
+    <!-- NAVBAR MINI -->
+    <div class="poli-mini-nav">
+        <a href="/">← Kembali ke Beranda</a> 
+        <span class="separator">|</span>
+        <a href="/poliklinik/">Daftar Poliklinik</a>
+    </div>
+
+    <!-- HEADER -->
+    <div class="poli-header">
+        <h1 class="poli-detail-title">{{ poli.name }}</h1>
+
+        {% if is_open %}
+            <span class="poli-detail-status open">● Sedang Buka</span>
+        {% else %}
+            <span class="poli-detail-status closed">● Tutup</span>
+        {% endif %}
+    </div>
+
+    <!-- MAKLUMAT -->
+    <div class="poli-section">
+        <h3>Maklumat Layanan</h3>
+        <p>{{ poli.description }}</p>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="poli-section">
+        <h3>Jadwal Operasional</h3>
+
+        {% if schedules %}
+            <div class="schedule-list">
+                {% for s in schedules %}
+                <div class="schedule-item">
+                    <span class="day">{{ s.get_day_display }}</span>
+                    <span class="time">{{ s.start_time }} - {{ s.end_time }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-text">Belum ada jadwal terdaftar.</p>
+        {% endif %}
+    </div>
+
+    <!-- DOCTORS -->
+    <div class="poli-section">
+        <h3>Dokter yang Bertugas</h3>
+
+        {% if doctors %}
+            {% for d in doctors %}
+                <div class="doctor-card">
+
+                    <div class="name">
+                        Dr. {{ d.user.get_full_name|default:d.user.username }}
+                    </div>
+                    <div class="qual">
+                        {{ d.specialization }}
+                    </div>
+
+                    <!-- SLOT LIST -->
+                    <div class="slot-list">
+
+                        {% with doctor_slots|dictkey:d.id as slots %}
+                            {% if slots %}
+                                {% for slot in slots %}
+                                    <div class="slot-item">
+                                        <span>
+                                            {{ slot.date }} | {{ slot.start_time }} - {{ slot.end_time }}
+                                        </span>
+
+                                        {% if slot.available %}
+                                            <a class="slot-btn"
+                                               href="{% url 'appointments:appointment_choose_slot' slot.id %}">
+                                                Pilih
+                                            </a>
+                                        {% else %}
+                                            <span class="slot-btn disabled">Penuh</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="empty-text">Belum ada jadwal tersedia.</p>
+                            {% endif %}
+                        {% endwith %}
+
+                    </div>
+
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-text">Belum ada dokter terdaftar.</p>
+        {% endif %}
+    </div>
+</div>
+
+
+<!-- SLOT PREVIEW BAWAH -->
+<div class="slot-preview">
+    <h4>Jadwal Tersedia</h4>
+
+    {% if doctors %}
+        {% for d in doctors %}
+            {% with doctor_slots|dictkey:d.id as preview_slots %}
+                {% if preview_slots %}
+                    {% for s in preview_slots %}
+                        <div class="slot-item">
+                            <span class="slot-date">
+                                {{ s.date|date:"l, d M Y" }}
+                            </span>
+
+                            <span class="slot-time">
+                                {{ s.start_time|time:"H:i" }} - {{ s.end_time|time:"H:i" }}
+                            </span>
+
+                            <span class="slot-quota">
+                                Sisa: {{ s.quota|add:"-" }}
+                            </span>
+
+                            <a href="{% url 'appointments:appointment_choose_slot' s.id %}"
+                               class="slot-book-btn">
+                                Pilih Slot
+                            </a>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        {% endfor %}
+    {% else %}
+        <p class="empty-text">Belum ada slot tersedia.</p>
+    {% endif %}
+</div>
+
+</body>
+</html>

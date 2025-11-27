@@ -16,8 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+<<<<<<< HEAD
 from django.conf import settings
 from django.conf.urls.static import static
+=======
+from django.contrib.auth import views as auth_views
+>>>>>>> b0efa40 (update konsultasi)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,8 +30,21 @@ urlpatterns = [
     path('consultation/', include('consultation.urls')),
     path('adminpanel/', include(('adminpanel.urls', 'adminpanel'), namespace='adminpanel')),
     path('doctors/', include('doctors.urls')),
+<<<<<<< HEAD
     path('appointments/', include('appointments.urls')),
     path('pharmacy/', include('pharmacy.urls')),
+=======
+    path("poliklinik/", include("poliklinik.urls")),
+    path("appointments/", include("appointments.urls", namespace="appointments")),
+
+   
+
+
+
+
+
+
+>>>>>>> b0efa40 (update konsultasi)
 ]
 
 if settings.DEBUG:

@@ -11,7 +11,9 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
   <div class="container">
     <a class="navbar-brand fw-bold" href="/">Sehatkuy</a>
+
     <ul class="navbar-nav ms-auto">
+<<<<<<< HEAD
       <li class="nav-item"><a href="/users/patient/dashboard/" class="nav-link">Dashboard</a></li>
       <li class="nav-item"><a href="{% url 'consultation:consultation_create' %}" class="nav-link">Konsultasi</a></li>
       <li class="nav-item"><a href="{% url 'consultation:consultation_list' %}" class="nav-link">Riwayat</a></li>
@@ -37,6 +39,33 @@
       {% endif %}
 
       <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link text-danger">Logout</a></li>
+=======
+
+      <li class="nav-item">
+        <a href="/users/patient/dashboard/" class="nav-link">Dashboard</a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'consultation_dashboard' %}" class="nav-link">Konsultasi</a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'consultation_list' %}" class="nav-link">Riwayat</a>
+      </li>
+
+      <li class="nav-item">
+
+        <!-- FIX BESAR DI SINI → Ubah GET menjadi POST  -->
+        <form method="POST" action="{% url 'logout' %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="nav-link btn btn-link text-danger p-0" style="text-decoration:none;">
+            Logout
+          </button>
+        </form>
+
+      </li>
+
+>>>>>>> b0efa40 (update konsultasi)
     </ul>
   </div>
 </nav>

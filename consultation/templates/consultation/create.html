@@ -3,15 +3,23 @@
 {% block title %}Konsultasi Baru{% endblock %}
 
 {% block content %}
+<div class="mb-4">
+    <a href="{% url 'consultation_dashboard' %}" class="text-decoration-none">&larr; Kembali ke konsul online</a>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-        <h5>Buat Konsultasi Baru</h5>
+        <h5>Buat Konsultasi Manual</h5>
+        <small>Gunakan formulir ini jika perlu menjadwalkan konsultasi di luar chatbot.</small>
     </div>
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" novalidate>
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit" class="btn btn-success">Kirim Konsultasi</button>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">Kirim Konsultasi</button>
+                <a href="{% url 'consultation_list' %}" class="btn btn-outline-secondary">Lihat Riwayat</a>
+            </div>
         </form>
     </div>
 </div>

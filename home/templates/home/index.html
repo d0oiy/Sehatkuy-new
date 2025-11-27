@@ -74,31 +74,40 @@
           </p>
 
           <div class="mt-4 d-flex gap-3">
-            {% if user.is_authenticated %}
-              <a href="{% url 'appointments:appointment_list' %}" class="btn btn-cta btn-lg">Buat Janji</a>
-              <a href="#services" class="btn btn-outline-cta btn-lg">Jelajahi Layanan</a>
-            {% else %}
-              <a href="{% url 'login' %}" class="btn btn-cta btn-lg">Mulai Sekarang</a>
-              <a href="#services" class="btn btn-outline-cta btn-lg">Jelajahi Layanan</a>
-            {% endif %}
-          </div>
+
+        {% if user.is_authenticated %}
+          <a href="{% url 'appointments:appointment_list' %}" class="btn btn-cta btn-lg">Buat Janji</a>
+          <a href="{% url 'poliklinik:index' %}" class="btn btn-outline-cta btn-lg">Poliklinik</a>
+          <a href="#services" class="btn btn-outline-cta btn-lg">Jelajahi Layanan</a>
+
+        {% else %}
+          <a href="{% url 'login' %}" class="btn btn-cta btn-lg">Mulai Sekarang</a>
+          <a href="{% url 'poliklinik:index' %}" class="btn btn-outline-cta btn-lg">Poliklinik</a>
+          <a href="#services" class="btn btn-outline-cta btn-lg">Jelajahi Layanan</a>
+        {% endif %}
+      </div>
+
 
           <!-- Stats -->
           <div class="hero-stats d-flex gap-4 mt-5">
-            <div class="stat">
-              <div class="stat-value">15+</div>
-              <div class="stat-label">Tahun Pengalaman</div>
-            </div>
-            <div class="stat">
-              <div class="stat-value">50K+</div>
-              <div class="stat-label">Pasien Puas</div>
-            </div>
-            <div class="stat">
-              <div class="stat-value">100+</div>
-              <div class="stat-label">Dokter Ahli</div>
-            </div>
-          </div>
-        </div>
+
+    <div class="stat">
+      <div class="stat-value">{{ active_doctors }}</div>
+      <div class="stat-label">Dokter Aktif</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-value">{{ open_poli_count }}</div>
+      <div class="stat-label">Poliklinik Buka</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-value">{{ available_slots }}</div>
+      <div class="stat-label">Slot Tersedia</div>
+    </div>
+
+</div>
+
         <!-- empty right column reserved for visual balance (image covers background) -->
         <div class="col-lg-5 d-none d-lg-block"></div>
       </div>
@@ -147,14 +156,15 @@
           </div>
         </div>
 
-        <div class="col-md-6 col-lg-3">
-          <div class="service-card p-4 h-100">
-            <div class="service-icon">🏥</div>
-            <h5 class="fw-bold mt-2">Poliklinik</h5>
-            <p class="small text-muted">Layanan spesialis untuk berbagai kebutuhan medis.</p>
-            <a href="#" class="service-more">Pelajari Lebih Lanjut →</a>
-          </div>
-        </div>
+        <div class="service-card p-4 h-100 service-card-highlight">
+  <div class="service-icon">🏥</div>
+  <h5 class="fw-bold mt-2">Poliklinik</h5>
+  <p class="small text-muted">Lihat poli yang tersedia sesuai kebutuhan Anda.</p>
+  <a href="{% url 'poliklinik:index' %}" class="service-more text-success fw-semibold">
+    Lihat Poliklinik →
+  </a>
+</div>
+
 
         <!-- second row -->
         <div class="col-md-6 col-lg-3">

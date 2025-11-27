@@ -1,0 +1,127 @@
+/* NAMESPACE DETAIL */
+.poli-detail-wrapper {
+    max-width: 900px;
+    margin: auto;
+    padding: 40px 20px;
+    font-family: "Inter", sans-serif;
+}
+
+/* NAVBAR MINI */
+.poli-mini-nav {
+    margin-bottom: 25px;
+}
+
+.poli-mini-nav a {
+    text-decoration: none;
+    color: #198754;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.poli-mini-nav a:hover {
+    color: #0f6e43;
+}
+
+/* TITLE */
+.poli-detail-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #14532d;
+    margin-bottom: 10px;
+}
+
+/* STATUS BADGE */
+.poli-detail-status {
+    padding: 7px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: white;
+    font-weight: 600;
+}
+
+.poli-detail-status.open {
+    background: #0f9d58;
+}
+
+.poli-detail-status.closed {
+    background: #d93025;
+}
+
+/* SECTION */
+.poli-section {
+    margin-top: 28px;
+}
+
+.poli-section h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1e3d34;
+    margin-bottom: 12px;
+}
+
+/* SCHEDULE */
+.schedule-list {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 18px;
+    background: #fafafa;
+}
+
+.schedule-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.schedule-item:last-child {
+    border-bottom: 0;
+}
+
+/* DOCTOR CARD */
+.doctor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+}
+
+.doctor-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.doctor-card .name {
+    font-weight: 700;
+    font-size: 17px;
+    color: #1e3d34;
+}
+
+.doctor-card .qual {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+/* BUTTON APPOINTMENT */
+.btn-janji {
+    display: block;
+    margin-top: 25px;
+    padding: 12px;
+    text-align: center;
+    text-decoration: none;
+    background: #198754;
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: .2s;
+}
+
+.btn-janji:hover {
+    background: #157347;
+}
+
+.btn-janji.disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}

@@ -96,13 +96,6 @@ def login_view(request):
     return render(request, 'users/login.html')
 
 
-# 🧩 LOGOUT VIEW
-@login_required
-def logout_view(request):
-    logout(request)
-    messages.success(request, 'Anda berhasil logout.')
-    return redirect('login')
-
 
 # 🩺 DASHBOARD PASIEN
 @login_required

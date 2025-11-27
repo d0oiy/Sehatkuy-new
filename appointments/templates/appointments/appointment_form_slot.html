@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Buat Janji | {{ doctor.user.get_full_name }}</title>
+
+    <style>
+        .form-wrapper {
+            max-width: 500px;
+            margin: 30px auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        .slot-info {
+            padding: 12px;
+            background: #f7fff7;
+            border-left: 4px solid #4CAF50;
+            margin-bottom: 20px;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 6px;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="form-wrapper">
+
+    <h2>Buat Janji Temu</h2>
+
+    <div class="slot-info">
+        <b>Poliklinik:</b> {{ poli.name }} <br>
+        <b>Dokter:</b> Dr. {{ doctor.user.get_full_name }} <br>
+        <b>Tanggal:</b> {{ slot.date }} <br>
+        <b>Waktu:</b> {{ slot.start_time }} - {{ slot.end_time }} <br>
+        <b>Sisa Kuota:</b> {{ slot.quota|add:"-"|add:slot.used_quota }}
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button class="btn-submit">Buat Janji</button>
+    </form>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Konsultasi Online{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <h3 class="mb-1">Konsultasi Online</h3>
+    <p class="text-muted mb-0">Verifikasi akun pasien, pilih dokter poliklinik, dan mulai percakapan melalui chatbot.</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-3">1. Verifikasi Akun</h5>
+                {% if account_verified %}
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-success me-3">Terverifikasi</span>
+                        <span>{{ request.user.get_full_name|default:request.user.username }}</span>
+                    </div>
+                    <p class="small text-muted mt-3 mb-0">
+                        Sistem mendeteksi kamu sebagai pasien aktif. Kamu bisa melanjutkan ke langkah berikutnya.
+                    </p>
+                {% else %}
+                    <span class="badge bg-danger mb-2">Perlu Tindakan</span>
+                    <p class="small text-muted mb-3">
+                        Verifikasi akun dengan melengkapi data pribadi di dashboard pasien sebelum memulai konsultasi.
+                    </p>
+                    <a href="{% url 'patient_dashboard' %}" class="btn btn-outline-danger btn-sm">Lengkapi Data</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">2. Pilih Dokter Poliklinik</h5>
+                    {% if has_doctor %}
+                        <span class="badge bg-success">Tersedia</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Belum ada dokter</span>
+                    {% endif %}
+                </div>
+                <p class="small text-muted">Pilih dokter dari daftar poliklinik untuk memulai konsultasi online.</p>
+
+                <div class="accordion" id="poliklinikAccordion">
+                    {% for poli in polikliniks %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading-{{ poli.id }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ poli.id }}">
+                                    {{ poli.name }}
+                                </button>
+                            </h2>
+                            <div id="collapse-{{ poli.id }}" class="accordion-collapse collapse" data-bs-parent="#poliklinikAccordion">
+                                <div class="accordion-body">
+                                    {% if poli.doctors.all %}
+                                        <div class="list-group list-group-flush">
+                                            {% for doctor in poli.doctors.all %}
+                                                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+                                                    <div>
+                                                        <h6 class="mb-1">Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}</h6>
+                                                        <small class="text-muted d-block">{{ doctor.specialization }}</small>
+                                                        <small class="text-muted">
+                                                            Poliklinik: {{ doctor.poliklinik.name|default:"-" }}
+                                                        </small>
+                                                        <small class="text-muted d-block">Kontak: {{ doctor.email }}</small>
+                                                    </div>
+                                                    <a href="{% url 'consultation_chat' doctor.id %}" class="btn btn-success btn-sm mt-2 mt-md-0">
+                                                        Chat Sekarang
+                                                    </a>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted mb-0">Belum ada dokter aktif pada poliklinik ini.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted mb-0">Belum ada poliklinik yang terdaftar.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">3. Riwayat Terbaru</h5>
+            <a href="{% url 'consultation_list' %}" class="btn btn-outline-primary btn-sm">Lihat Semua</a>
+        </div>
+        {% if consultations %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Dokter</th>
+                            <th>Poliklinik</th>
+                            <th>Terakhir</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in consultations %}
+                            <tr>
+                                <td>{{ c.doctor_name|default:"-" }}</td>
+                                <td>
+                                    {% if c.doctor and c.doctor.poliklinik %}
+                                        {{ c.doctor.poliklinik.name }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ c.created_at|date:"d M Y, H:i" }}</td>
+                                <td>
+                                    {% if c.status == 'Menunggu' %}
+                                        <span class="badge bg-warning text-dark">Menunggu</span>
+                                    {% elif c.status == 'Berlangsung' %}
+                                        <span class="badge bg-info text-dark">Berlangsung</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Selesai</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">Belum ada riwayat konsultasi. Pilih dokter dan mulai chat pertama kamu.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
