@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Detail Konsultasi{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Detail Konsultasi</h2>
+            <p class="text-muted mb-0">
+                Pasien: <strong>{{ consultation.patient.get_full_name|default:consultation.patient.username }}</strong>
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'doctors:consultations' %}" class="btn btn-outline-secondary">Kembali ke Daftar</a>
+            {% if consultation.status != 'Selesai' %}
+                <a href="{% url 'doctors:consultation_mark_done' consultation.id %}" class="btn btn-success">
+                    Tandai Selesai
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Info Konsultasi -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Informasi Konsultasi</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td><strong>Pasien:</strong></td>
+                            <td>{{ consultation.patient.get_full_name|default:consultation.patient.username }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ consultation.patient.email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Poliklinik:</strong></td>
+                            <td>
+                                {% if consultation.doctor and consultation.doctor.poliklinik %}
+                                    {{ consultation.doctor.poliklinik.name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                {% if consultation.status == 'Menunggu' %}
+                                    <span class="badge bg-warning">Menunggu</span>
+                                {% elif consultation.status == 'Berlangsung' %}
+                                    <span class="badge bg-info">Berlangsung</span>
+                                {% else %}
+                                    <span class="badge bg-success">Selesai</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tanggal:</strong></td>
+                            <td>{{ consultation.created_at|date:"d M Y, H:i" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Keluhan Awal</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ consultation.complaint|default:"Tidak ada keluhan yang dicatat." }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">💬 Percakapan</h5>
+        </div>
+        <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="mb-3">
+                        <div class="d-flex {% if msg.sender == 'doctor' %}justify-content-end{% else %}justify-content-start{% endif %}">
+                            <div class="card {% if msg.sender == 'doctor' %}bg-primary text-white{% elif msg.sender == 'bot' %}bg-light{% else %}bg-secondary text-white{% endif %}" style="max-width: 70%;">
+                                <div class="card-body p-2">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <small class="fw-bold">
+                                            {% if msg.sender == 'doctor' %}
+                                                Anda (Dokter)
+                                            {% elif msg.sender == 'bot' %}
+                                                🤖 Chatbot
+                                            {% else %}
+                                                {{ consultation.patient.get_full_name|default:consultation.patient.username }}
+                                            {% endif %}
+                                        </small>
+                                        <small class="opacity-75">{{ msg.created_at|date:"H:i" }}</small>
+                                    </div>
+                                    <p class="mb-0">{{ msg.message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted text-center">Belum ada pesan dalam konsultasi ini.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Form Balas Chat -->
+    {% if consultation.status != 'Selesai' %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Balas Chat</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="message" class="form-control" rows="4" placeholder="Tuliskan balasan untuk pasien..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Kirim Pesan
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            Konsultasi ini telah selesai. Tidak dapat mengirim pesan lagi.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

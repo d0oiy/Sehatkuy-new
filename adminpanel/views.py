@@ -4,13 +4,10 @@ from django.contrib import messages
 
 from users.models import CustomUser
 from doctors.models import Doctor
-<<<<<<< HEAD
-from consultation.models import Consultation  # ← pastikan model Consultation sudah ada
+from consultation.models import Consultation
 from pharmacy.models import MedicineOrder
 from pharmacy.forms import MedicineForm
-=======
-from consultation.models import Consultation
->>>>>>> b0efa40 (update konsultasi)
+from articles.models import Article
 from .models import ActivityLog
 from .forms import UserForm, DoctorForm
 
@@ -22,48 +19,40 @@ def is_admin(user):
 @login_required
 @user_passes_test(is_admin)
 def admin_dashboard(request):
-    # Handle medicine form submission
-    if request.method == 'POST':
-        form = MedicineForm(request.POST)
-        if form.is_valid():
-            medicine = form.save(commit=False)
-            medicine.created_by = request.user
-            medicine.save()
-            messages.success(request, f'Obat "{medicine.name}" berhasil ditambahkan.')
-            return redirect('adminpanel:admin_dashboard')
-    else:
-        form = MedicineForm()
-    
+    form = MedicineForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        medicine = form.save(commit=False)
+        medicine.created_by = request.user
+        medicine.save()
+        messages.success(request, f'Obat "{medicine.name}" berhasil ditambahkan.')
+        return redirect('adminpanel:admin_dashboard')
+
     total_users = CustomUser.objects.count()
     total_doctors = Doctor.objects.count()
-<<<<<<< HEAD
-    total_consultations = Consultation.objects.count() if 'consultations' in globals() else 0
     total_patients = CustomUser.objects.filter(role='pasien').count()
+    total_consultations = Consultation.objects.count()
+    total_articles = Article.objects.count()
+    published_articles = Article.objects.filter(is_published=True).count()
     recent_consultations = Consultation.objects.select_related('patient').order_by('-date')[:12]
     recent_orders = MedicineOrder.objects.select_related('patient').prefetch_related('items__medicine').order_by('-created_at')[:12]
-    activities = ActivityLog.objects.order_by('-timestamp')[:5]
-=======
-    total_consultations = Consultation.objects.count() if 'Consultation' in globals() else 0
-    activity_logs = ActivityLog.objects.order_by('-timestamp')[:8]
->>>>>>> b0efa40 (update konsultasi)
+    recent_articles = Article.objects.select_related('author').order_by('-created_at')[:5]
+    activities = ActivityLog.objects.order_by('-timestamp')[:8]
 
-    return render(request, 'adminpanel/dashboard.html', {
+    context = {
         'total_users': total_users,
         'total_doctors': total_doctors,
-        'total_consultations': total_consultations,
-<<<<<<< HEAD
         'total_patients': total_patients,
+        'total_consultations': total_consultations,
+        'total_articles': total_articles,
+        'published_articles': published_articles,
         'activities': activities,
         'recent_consultations': recent_consultations,
         'recent_orders': recent_orders,
+        'recent_articles': recent_articles,
         'form': form,
+        'title': 'Dashboard Admin',
     }
     return render(request, 'adminpanel/dashboard.html', context)
-=======
-        'activity_logs': activity_logs,
-        'title': 'Dashboard Admin'
-    })
->>>>>>> b0efa40 (update konsultasi)
 
 
 @login_required
@@ -85,7 +74,7 @@ def user_create(request):
             form.save()
             ActivityLog.objects.create(user=request.user, action="Menambahkan pengguna baru")
             messages.success(request, "Pengguna berhasil ditambahkan.")
-            return redirect('user_list')
+            return redirect('adminpanel:user_list')
     else:
         form = UserForm()
 
@@ -104,7 +93,7 @@ def user_edit(request, pk):
         form.save()
         ActivityLog.objects.create(user=request.user, action=f"Mengedit pengguna {user.username}")
         messages.success(request, "Data pengguna berhasil diperbarui.")
-        return redirect('user_list')
+        return redirect('adminpanel:user_list')
     return render(request, 'adminpanel/user_form.html', {'form': form, 'title': 'Edit Pengguna'})
 
 
@@ -116,7 +105,7 @@ def user_delete(request, pk):
         ActivityLog.objects.create(user=request.user, action=f"Menghapus pengguna {user.username}")
         user.delete()
         messages.success(request, "Pengguna berhasil dihapus.")
-        return redirect('user_list')
+        return redirect('adminpanel:user_list')
     return render(request, 'adminpanel/confirm_delete.html', {'object': user, 'title': 'Hapus Pengguna'})
 
 
@@ -141,7 +130,7 @@ def doctor_create(request):
             doctor.save()
             ActivityLog.objects.create(user=request.user, action=f"Menambahkan dokter {doctor.user.username if doctor.user else ''}")
             messages.success(request, "Dokter berhasil ditambahkan.")
-            return redirect('doctor_list')
+            return redirect('adminpanel:doctor_list')
     else:
         form = DoctorForm()
     return render(request, 'adminpanel/doctor_form.html', {'form': form, 'title': 'Tambah Dokter'})
@@ -157,7 +146,7 @@ def doctor_edit(request, pk):
             form.save()
             ActivityLog.objects.create(user=request.user, action=f"Mengedit dokter {doctor.user.username if doctor.user else ''}")
             messages.success(request, "Data dokter berhasil diperbarui.")
-            return redirect('doctor_list')
+            return redirect('adminpanel:doctor_list')
     else:
         form = DoctorForm(instance=doctor)
     return render(request, 'adminpanel/doctor_form.html', {'form': form, 'title': 'Edit Dokter'})
@@ -171,7 +160,7 @@ def doctor_delete(request, pk):
         doctor.delete()
         ActivityLog.objects.create(user=request.user, action=f"Menghapus dokter {doctor.user.username if doctor.user else ''}")
         messages.success(request, "Dokter berhasil dihapus.")
-        return redirect('doctor_list')
+        return redirect('adminpanel:doctor_list')
     return render(request, 'adminpanel/doctor_confirm_delete.html', {'doctor': doctor, 'title': 'Hapus Dokter'})
 
 

@@ -91,6 +91,17 @@
         {% endif %}
     </div>
 
+    <!-- PERINGATAN JIKA TUTUP -->
+    {% if not is_open %}
+    <div class="poli-section" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px;">
+        <h3 style="color: #856404; margin-top: 0;">⚠️ Poliklinik Sedang Tutup</h3>
+        <p style="color: #856404; margin-bottom: 0;">
+            Poliklinik ini sedang tutup. Anda tidak dapat membuat janji temu saat ini. 
+            Silakan cek jadwal operasional di atas atau kembali lagi saat poliklinik buka.
+        </p>
+    </div>
+    {% endif %}
+
     <!-- DOCTORS -->
     <div class="poli-section">
         <h3>Dokter yang Bertugas</h3>
@@ -117,13 +128,17 @@
                                             {{ slot.date }} | {{ slot.start_time }} - {{ slot.end_time }}
                                         </span>
 
-                                        {% if slot.available %}
-                                            <a class="slot-btn"
-                                               href="{% url 'appointments:appointment_choose_slot' slot.id %}">
-                                                Pilih
-                                            </a>
+                                        {% if is_open %}
+                                            {% if slot.available %}
+                                                <a class="slot-btn"
+                                                   href="{% url 'appointments:appointment_choose_slot' slot.id %}">
+                                                    Pilih
+                                                </a>
+                                            {% else %}
+                                                <span class="slot-btn disabled">Penuh</span>
+                                            {% endif %}
                                         {% else %}
-                                            <span class="slot-btn disabled">Penuh</span>
+                                            <span class="slot-btn disabled">Poli Tutup</span>
                                         {% endif %}
                                     </div>
                                 {% endfor %}
@@ -165,10 +180,22 @@
                                 Sisa: {{ s.quota|add:"-" }}
                             </span>
 
-                            <a href="{% url 'appointments:appointment_choose_slot' s.id %}"
-                               class="slot-book-btn">
-                                Pilih Slot
-                            </a>
+                            {% if is_open %}
+                                {% if s.available %}
+                                    <a href="{% url 'appointments:appointment_choose_slot' s.id %}"
+                                       class="slot-book-btn">
+                                        Pilih Slot
+                                    </a>
+                                {% else %}
+                                    <span class="slot-book-btn" style="background: #aaa; pointer-events: none;">
+                                        Penuh
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="slot-book-btn" style="background: #aaa; pointer-events: none;">
+                                    Poli Tutup
+                                </span>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 {% endif %}

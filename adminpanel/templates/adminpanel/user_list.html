@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-between mb-3">
   <input type="text" id="searchUser" class="form-control w-50" placeholder="Cari pengguna...">
-  <a href="{% url 'user_create' %}" class="btn btn-success">+ Tambah User</a>
+  <a href="{% url 'adminpanel:user_create' %}" class="btn btn-success">+ Tambah User</a>
 </div>
 
 <table class="table table-striped table-hover align-middle">
@@ -27,8 +27,8 @@
       <td>{{ user.role|default:"-" }}</td>
       <td>{{ user.date_joined|date:"d M Y" }}</td>
       <td class="text-center">
-        <a href="{% url 'user_edit' user.id %}" class="btn btn-warning btn-sm">Edit</a>
-        <a href="{% url 'user_delete' user.id %}" class="btn btn-danger btn-sm"
+        <a href="{% url 'adminpanel:user_edit' user.id %}" class="btn btn-warning btn-sm">Edit</a>
+        <a href="{% url 'adminpanel:user_delete' user.id %}" class="btn btn-danger btn-sm"
            onclick="return confirm('Hapus pengguna ini?')">Hapus</a>
       </td>
     </tr>

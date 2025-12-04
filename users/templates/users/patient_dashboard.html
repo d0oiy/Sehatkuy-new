@@ -1,264 +1,731 @@
+{% extends 'base.html' %}
 {% load static %}
 {% load currency_filters %}
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Dashboard Pasien | Sehatkuy</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    body { background-color: #f8f9fa; animation: fadeIn 0.6s ease-in-out; }
-    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
-    .card { border-radius: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); transition: transform .2s; }
-    .card:hover { transform: translateY(-3px); }
-    .profile-card { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
-    .nav-link.active { font-weight: bold; color: #198754 !important; }
-    .badge { text-transform: capitalize; }
-    .btn { transition: all 0.2s ease-in-out; }
-    .btn:hover { transform: scale(1.05); }
-    .tab-pane { animation: fadeTab 0.4s ease; }
-    @keyframes fadeTab { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
-  </style>
-</head>
-<body>
+{% load humanize %}
+{% block title %}Dashboard Pasien - Sehatkuy{% endblock %}
+{% block content %}
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-success">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="#">Sehatkuy</a>
+<style>
+  :root {
+    --primary-color: #28a745;
+    --secondary-color: #20c997;
+    --accent-color: #17a2b8;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-bg: #f8f9fa;
+  }
 
-      <div class="ms-auto">
-        <!-- FIX: Logout wajib POST -->
-        <form method="POST" action="{% url 'logout' %}" class="d-inline">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
-        </form>
+  body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    animation: fadeIn 0.6s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .dashboard-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    color: white;
+    box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
+    margin-bottom: 2rem;
+    animation: slideIn 0.5s ease-out;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: none;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  }
+
+  .stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+
+  .stat-card .icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+
+  .stat-card .number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0.5rem 0;
+  }
+
+  .stat-card .label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .quick-action-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: none;
+    text-align: center;
+    height: 100%;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quick-action-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(40, 167, 69, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .quick-action-card:hover::after {
+    width: 300px;
+    height: 300px;
+  }
+
+  .quick-action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+
+  .quick-action-card .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
+  }
+
+  .quick-action-card:hover .icon {
+    transform: scale(1.2) rotate(5deg);
+    animation: pulse 1s infinite;
+  }
+
+  .quick-action-card h6 {
+    font-weight: 600;
+    color: #333;
+    margin-top: 0.5rem;
+  }
+
+  .quick-action-card p {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  .feature-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary-color);
+  }
+
+  .feature-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  }
+
+  .feature-card .card-header-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  .feature-card .card-header-custom h5 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+  }
+
+  .badge-modern {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+
+  .table-modern {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table-modern thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+
+  .table-modern tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  .table-modern tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+  }
+
+  .table-modern tbody td {
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+    vertical-align: middle;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+  }
+
+  .empty-state .icon {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+  }
+
+  .profile-info-card {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  }
+
+  .profile-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .profile-info-item:last-child {
+    border-bottom: none;
+  }
+
+  .profile-info-item label {
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+
+  .profile-info-item span {
+    color: #333;
+    font-weight: 500;
+  }
+
+  .btn-modern {
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+  }
+
+  .btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--danger-color);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+  }
+</style>
+
+<div class="container-fluid py-4">
+  <!-- Header Dashboard -->
+  <div class="dashboard-header">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h2 class="mb-2">👋 Selamat Datang, {{ request.user.get_full_name|default:request.user.username|title }}!</h2>
+        <p class="mb-0 opacity-90">Kelola kesehatan Anda dengan mudah melalui dashboard ini</p>
       </div>
-    </div>
-  </nav>
-
-  <!-- Konten -->
-  <div class="container my-4">
-
-    <!-- Profil -->
-    <div class="card profile-card p-4 mb-4 text-center">
-      <h4>Halo, {{ request.user.username|title }} 👋</h4>
-      <p class="mb-0">Selamat datang di Dashboard Pasien Sehatkuy</p>
-    </div>
-
-    <!-- Menu Navigasi -->
-    {% if user.is_authenticated and user.role == 'pasien' %}
-    <div class="mb-3 d-flex gap-2">
-      <a href="{% url 'pharmacy:medicine_list' %}" class="btn btn-outline-success" title="Lihat daftar obat yang tersedia" data-bs-toggle="tooltip" aria-label="Lihat Obat">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list me-1" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M2.5 12.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5z"/>
-        </svg>
-        Lihat Obat
-      </a>
-      <a href="{% url 'pharmacy:order_create' %}" class="btn btn-success" title="Buat pesanan obat baru" data-bs-toggle="tooltip" aria-label="Pesan Sekarang">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart-plus me-1" viewBox="0 0 16 16">
-          <path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5V11.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/>
-          <path d="M0 1.5A.5.5 0 0 1 .5 1h1a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .49.598l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.49-.402L1.61 1.607 1.11 1H.5a.5.5 0 0 1-.5-.5zM4.14 5l1.25 5h7.22l1.25-5H4.14z"/>
-        </svg>
-        Pesan Sekarang
-      </a>
-    </div>
-    <small class="text-muted">Gunakan tombol untuk melihat katalog obat atau langsung membuat pesanan.</small>
-    {% endif %}
-    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">Profil Saya</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="consult-tab" data-bs-toggle="tab" data-bs-target="#consult" type="button" role="tab">Konsultasi</button>
-      </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">Pemesanan Obat</button>
-        </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="appointment-tab" data-bs-toggle="tab" data-bs-target="#appointment" type="button" role="tab">Janji Temu</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="queue-tab" data-bs-toggle="tab" data-bs-target="#queue" type="button" role="tab">Antrian</button>
-      </li>
-    </ul>
-
-    <!-- Isi Tab -->
-    <div class="tab-content">
-
-      <!-- Tab Profil -->
-      <div class="tab-pane fade show active" id="profile" role="tabpanel">
-        <div class="card p-4">
-          <h5>Data Profil</h5>
-          <table class="table mt-3">
-            <tr><th>Nama</th><td>{{ request.user.username }}</td></tr>
-            <tr><th>Email</th><td>{{ request.user.email }}</td></tr>
-            <tr><th>Nomor HP</th><td>{{ request.user.phone|default:"-" }}</td></tr>
-            <tr><th>Alamat</th><td>{{ request.user.address|default:"-" }}</td></tr>
-            <tr><th>Tanggal Lahir</th><td>{{ request.user.birth_date|default:"-" }}</td></tr>
-            <tr><th>Jenis Kelamin</th><td>{{ request.user.get_gender_display|default:"-" }}</td></tr>
-          </table>
+      <div class="col-md-4 text-end">
+        <div class="d-flex gap-2 justify-content-end">
+          <a href="{% url 'consultation:consultation_dashboard' %}" class="btn btn-light btn-modern">
+            💬 Konsultasi
+          </a>
+          <a href="{% url 'poliklinik:index' %}" class="btn btn-light btn-modern">
+            🏥 Janji Temu
+          </a>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Tab Konsultasi -->
-      <div class="tab-pane fade" id="consult" role="tabpanel">
-        <div class="card p-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5>Daftar Konsultasi</h5>
-<<<<<<< HEAD
-            <a href="{% url 'consultation:consultation_create' %}" class="btn btn-success btn-sm">+ Buat Konsultasi</a>
-=======
-            <a href="{% url 'consultation_dashboard' %}" class="btn btn-success btn-sm">+ Konsultasi Online</a>
->>>>>>> b0efa40 (update konsultasi)
-          </div>
+  <!-- Statistik Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="icon">💬</div>
+        <div class="number">{{ total_consultations|default:0 }}</div>
+        <div class="label">Konsultasi</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="icon">📅</div>
+        <div class="number">{{ total_appointments|default:0 }}</div>
+        <div class="label">Janji Temu</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="icon">💊</div>
+        <div class="number">{{ total_orders|default:0 }}</div>
+        <div class="label">Pesanan Obat</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="icon">✅</div>
+        <div class="number">{{ approved_appointments|default:0 }}</div>
+        <div class="label">Disetujui</div>
+      </div>
+    </div>
+  </div>
 
-            <!-- Tab Pemesanan Obat -->
-            <div class="tab-pane fade" id="orders" role="tabpanel">
-              <div class="card p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5>Daftar Pemesanan Obat</h5>
-                  <a href="{% url 'pharmacy:order_create' %}" class="btn btn-success btn-sm">+ Buat Pesanan</a>
-                </div>
-                {% if orders and orders.count > 0 %}
-                  <table class="table table-striped">
-                    <thead>
-                      <tr><th>No. Pesanan</th><th>Tanggal</th><th>Status</th><th>Total</th><th>Aksi</th></tr>
-                    </thead>
-                    <tbody>
-                      {% for o in orders %}
-                      <tr>
-                        <td>{{ o.order_number }}</td>
-                        <td>{{ o.created_at|date:"d M Y H:i" }}</td>
-                        <td>{{ o.get_status_display }}</td>
-                        <td>{{ o.total_price|rupiah }}</td>
-                        <td><a href="{% url 'pharmacy:order_detail' o.pk %}" class="btn btn-sm btn-primary">Lihat</a></td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                {% else %}
-                  <p class="text-muted text-center">Belum ada pemesanan obat.</p>
-                {% endif %}
+  <!-- Quick Actions -->
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <h4 class="mb-3">⚡ Akses Cepat</h4>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{% url 'consultation:consultation_dashboard' %}" class="text-decoration-none">
+        <div class="quick-action-card">
+          <div class="icon">💬</div>
+          <h6>Konsultasi Online</h6>
+          <p>Chat dengan dokter</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{% url 'poliklinik:index' %}" class="text-decoration-none">
+        <div class="quick-action-card">
+          <div class="icon">🏥</div>
+          <h6>Buat Janji Temu</h6>
+          <p>Pilih poliklinik & dokter</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{% url 'pharmacy:order_create' %}" class="text-decoration-none">
+        <div class="quick-action-card">
+          <div class="icon">💊</div>
+          <h6>Pesan Obat</h6>
+          <p>Beli obat online</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{% url 'pharmacy:medicine_list' %}" class="text-decoration-none">
+        <div class="quick-action-card">
+          <div class="icon">📋</div>
+          <h6>Katalog Obat</h6>
+          <p>Lihat daftar obat</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{% url 'laboratory:home' %}" class="text-decoration-none">
+        <div class="quick-action-card">
+          <div class="icon">🧪</div>
+          <h6>Laboratorium</h6>
+          <p>Paket tes & booking</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{% url 'emergency:dashboard' %}" class="text-decoration-none">
+        <div class="quick-action-card">
+          <div class="icon">🚑</div>
+          <h6>Gawat Darurat</h6>
+          <p>Kontak RS & ambulans</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Card Nomor Antrian Aktif -->
+  {% if active_queues %}
+    <div class="row g-4 mb-4">
+      {% for queue in active_queues %}
+        <div class="col-md-6">
+          <div class="card shadow-sm border-primary border-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="card-body text-center p-4">
+              <h6 class="mb-3">🎫 Nomor Antrian Anda</h6>
+              <div class="display-1 fw-bold mb-3">#{{ queue.queue_number }}</div>
+              <div class="mb-2">
+                <strong>Poliklinik:</strong> {{ queue.poliklinik.name }}
               </div>
+              <div class="mb-2">
+                <strong>Dokter:</strong> Dr. {{ queue.doctor.user.get_full_name|default:queue.doctor.user.username }}
+              </div>
+              <div class="mb-3">
+                <span class="badge bg-light text-dark px-3 py-2">
+                  {% if queue.status == 'waiting' %}Menunggu
+                  {% elif queue.status == 'checked_in' %}Sudah Check In
+                  {% elif queue.status == 'in_progress' %}Sedang Dilayani
+                  {% endif %}
+                </span>
+              </div>
+              <a href="{% url 'appointments:queue_status' queue.id %}" class="btn btn-light btn-lg w-100">
+                Lihat Detail Antrian
+              </a>
             </div>
-          {% if consultations %}
-            <table class="table table-striped">
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Main Content Cards -->
+  <div class="row g-4">
+    <!-- Profil Saya -->
+    <div class="col-lg-4">
+      <div class="profile-info-card">
+        <h5 class="mb-4">👤 Profil Saya</h5>
+        <div class="profile-info-item">
+          <label>Nama</label>
+          <span>{{ request.user.get_full_name|default:request.user.username }}</span>
+        </div>
+        <div class="profile-info-item">
+          <label>Email</label>
+          <span>{{ request.user.email }}</span>
+        </div>
+        <div class="profile-info-item">
+          <label>Nomor HP</label>
+          <span>{{ request.user.phone|default:"-" }}</span>
+        </div>
+        <div class="profile-info-item">
+          <label>Alamat</label>
+          <span>{{ request.user.address|default:"-"|truncatewords:5 }}</span>
+        </div>
+        <div class="profile-info-item">
+          <label>Tanggal Lahir</label>
+          <span>{{ request.user.birth_date|date:"d M Y"|default:"-" }}</span>
+        </div>
+        <div class="profile-info-item">
+          <label>Jenis Kelamin</label>
+          <span>{{ request.user.get_gender_display|default:"-" }}</span>
+        </div>
+        <div class="mt-3">
+          <a href="{% url 'profile_edit' %}" class="btn btn-primary btn-modern w-100">✏️ Edit Profil</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Konsultasi Terbaru -->
+    <div class="col-lg-8">
+      <div class="feature-card">
+        <div class="card-header-custom">
+          <h5>💬 Konsultasi Terbaru</h5>
+          <a href="{% url 'consultation:consultation_dashboard' %}" class="btn btn-success btn-sm btn-modern">
+            + Konsultasi Baru
+          </a>
+        </div>
+        {% if consultations %}
+          <div class="table-responsive">
+            <table class="table table-modern">
               <thead>
-                <tr><th>Tanggal</th><th>Dokter</th><th>Keluhan</th><th>Status</th></tr>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Dokter</th>
+                  <th>Keluhan</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
               </thead>
               <tbody>
                 {% for c in consultations %}
                 <tr>
-                  <td>{{ c.date|date:"d M Y" }}</td>
+                  <td>{{ c.created_at|date:"d M Y" }}</td>
                   <td>{{ c.doctor_name|default:"-" }}</td>
-                  <td>{{ c.complaint|truncatechars:50 }}</td>
+                  <td>{{ c.complaint|truncatewords:8|default:"-" }}</td>
                   <td>
-                    <div class="progress" style="height: 10px;">
-                      {% if c.status == 'menunggu' %}
-                        <div class="progress-bar bg-warning" style="width: 30%;"></div>
-                      {% elif c.status == 'diproses' %}
-                        <div class="progress-bar bg-info" style="width: 65%;"></div>
-                      {% elif c.status == 'selesai' %}
-                        <div class="progress-bar bg-success" style="width: 100%;"></div>
-                      {% endif %}
-                    </div>
-                    <small class="text-muted d-block mt-1">{{ c.status|title }}</small>
+                    {% if c.status == 'Menunggu' %}
+                      <span class="badge badge-modern bg-warning text-dark">Menunggu</span>
+                    {% elif c.status == 'Berlangsung' %}
+                      <span class="badge badge-modern bg-info">Berlangsung</span>
+                    {% else %}
+                      <span class="badge badge-modern bg-success">Selesai</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if c.doctor %}
+                      <a href="{% url 'consultation:consultation_chat' c.doctor.id %}" class="btn btn-sm btn-primary">
+                        Buka
+                      </a>
+                    {% endif %}
                   </td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
-          {% else %}
-            <p class="text-muted text-center">Belum ada konsultasi.</p>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Tab Janji Temu -->
-      <div class="tab-pane fade" id="appointment" role="tabpanel">
-        <div class="card p-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5>Janji Temu Dokter</h5>
-
-            <!-- FIX 🔥: ubah tombol ke halaman poliklinik -->
-            <a href="{% url 'poliklinik:index' %}" class="btn btn-success btn-sm">
-              + Buat Janji Dokter
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="icon">💬</div>
+            <p>Belum ada konsultasi</p>
+            <a href="{% url 'consultation:consultation_dashboard' %}" class="btn btn-success btn-modern">
+              Mulai Konsultasi
             </a>
           </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 
-          {% if appointments %}
-            <table class="table table-striped">
+  <!-- Janji Temu & Pesanan -->
+  <div class="row g-4 mt-2">
+    <!-- Janji Temu -->
+    <div class="col-lg-6">
+      <div class="feature-card">
+        <div class="card-header-custom">
+          <h5>📅 Janji Temu</h5>
+          <a href="{% url 'poliklinik:index' %}" class="btn btn-success btn-sm btn-modern">
+            + Buat Janji
+          </a>
+        </div>
+        {% if appointments %}
+          <div class="table-responsive">
+            <table class="table table-modern">
               <thead>
-                <tr><th>Dokter</th><th>Tanggal</th><th>Waktu</th><th>Alasan</th><th>Status</th></tr>
+                <tr>
+                  <th>Dokter</th>
+                  <th>Tanggal</th>
+                  <th>Waktu</th>
+                  <th>Status</th>
+                </tr>
               </thead>
               <tbody>
                 {% for a in appointments %}
                 <tr>
-                  <td>{{ a.doctor.name }}</td>
-                  <td>{{ a.date|date:"d M Y" }}</td>
-                  <td>{{ a.time }}</td>
-                  <td>{{ a.reason|default:"-" }}</td>
                   <td>
-                    <span class="badge 
-                      {% if a.status == 'pending' %}bg-warning
-                      {% elif a.status == 'approved' %}bg-success
-                      {% elif a.status == 'cancelled' %}bg-danger{% endif %}">
-                      {{ a.status|title }}
-                    </span>
+                    {% if a.doctor %}
+                      Dr. {{ a.doctor.user.get_full_name|default:a.doctor.user.username }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>{{ a.date|date:"d M Y" }}</td>
+                  <td>{{ a.time|time:"H:i" }}</td>
+                  <td>
+                    {% if a.status == 'pending' %}
+                      <span class="badge badge-modern bg-warning text-dark">Pending</span>
+                    {% elif a.status == 'approved' %}
+                      <span class="badge badge-modern bg-success">Disetujui</span>
+                    {% else %}
+                      <span class="badge badge-modern bg-danger">Dibatalkan</span>
+                    {% endif %}
                   </td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
-          {% else %}
-            <p class="text-muted text-center">Belum ada janji yang dibuat.</p>
-          {% endif %}
-        </div>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="icon">📅</div>
+            <p>Belum ada janji temu</p>
+            <a href="{% url 'poliklinik:index' %}" class="btn btn-success btn-modern">
+              Buat Janji Temu
+            </a>
+          </div>
+        {% endif %}
       </div>
+    </div>
 
-      <!-- Tab Antrian -->
-      <div class="tab-pane fade" id="queue" role="tabpanel">
-        <div class="card p-4 text-center">
-          <h5>Status Antrian</h5>
-          <p>Belum ada antrian aktif.</p>
+    <!-- Pesanan Obat -->
+    <div class="col-lg-6">
+      <div class="feature-card">
+        <div class="card-header-custom">
+          <h5>💊 Pesanan Obat</h5>
+          <a href="{% url 'pharmacy:order_create' %}" class="btn btn-success btn-sm btn-modern">
+            + Pesan Obat
+          </a>
         </div>
+        {% if orders %}
+          <div class="table-responsive">
+            <table class="table table-modern">
+              <thead>
+                <tr>
+                  <th>No. Pesanan</th>
+                  <th>Tanggal</th>
+                  <th>Status</th>
+                  <th>Total</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for o in orders %}
+                <tr>
+                  <td>{{ o.order_number|truncatechars:10 }}</td>
+                  <td>{{ o.created_at|date:"d M Y" }}</td>
+                  <td>
+                    <span class="badge badge-modern 
+                      {% if o.status == 'pending' %}bg-warning text-dark
+                      {% elif o.status == 'processing' %}bg-info
+                      {% elif o.status == 'completed' %}bg-success
+                      {% else %}bg-secondary{% endif %}">
+                      {{ o.get_status_display }}
+                    </span>
+                  </td>
+                  <td>{{ o.total_price|rupiah|default:"-" }}</td>
+                  <td>
+                    <a href="{% url 'pharmacy:order_detail' o.pk %}" class="btn btn-sm btn-primary">
+                      Lihat
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="icon">💊</div>
+            <p>Belum ada pesanan</p>
+            <a href="{% url 'pharmacy:order_create' %}" class="btn btn-success btn-modern">
+              Pesan Obat
+            </a>
+          </div>
+        {% endif %}
       </div>
-
     </div>
   </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Smooth scroll animation
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add animation to cards on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
 
-  <!-- SweetAlert Notifikasi -->
-  <script>
-    {% if messages %}
-      {% for msg in messages %}
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: '{{ msg }}',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      {% endfor %}
-    {% endif %}
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
 
-    {% for a in appointments %}
-      {% if a.status == 'approved' %}
+    document.querySelectorAll('.stat-card, .quick-action-card, .feature-card').forEach(card => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(card);
+    });
+
+    // Add click ripple effect
+    document.querySelectorAll('.quick-action-card').forEach(card => {
+      card.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.classList.add('ripple');
+        
+        this.appendChild(ripple);
+        
         setTimeout(() => {
-          Swal.fire({
-            icon: 'info',
-            title: 'Janji Dokter Disetujui!',
-            text: 'Dokter {{ a.doctor.name }} telah menyetujui janji Anda pada {{ a.date }}.',
-            timer: 4000,
-            showConfirmButton: false
-          });
-        }, 1500);
-      {% endif %}
-    {% endfor %}
-  </script>
+          ripple.remove();
+        }, 600);
+      });
+    });
+  });
+</script>
 
-</body>
-</html>
+<style>
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple-animation 0.6s ease-out;
+    pointer-events: none;
+  }
+
+  @keyframes ripple-animation {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+</style>
+
+{% endblock %}

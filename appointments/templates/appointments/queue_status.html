@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Status Antrian{% endblock %}
+{% block content %}
+<style>
+  .queue-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 3rem;
+    color: white;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 2rem;
+  }
+  .queue-number {
+    font-size: 5rem;
+    font-weight: bold;
+    margin: 1rem 0;
+  }
+  .info-card {
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  .status-badge {
+    font-size: 1.2rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+  }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="queue-card">
+    <h2>🎫 Nomor Antrian Anda</h2>
+    <div class="queue-number">#{{ queue.queue_number }}</div>
+    <div class="status-badge 
+      {% if queue.status == 'waiting' %}bg-warning text-dark
+      {% elif queue.status == 'checked_in' %}bg-info
+      {% elif queue.status == 'in_progress' %}bg-success
+      {% else %}bg-secondary{% endif %}">
+      {% if queue.status == 'waiting' %}Menunggu
+      {% elif queue.status == 'checked_in' %}Sudah Check In
+      {% elif queue.status == 'in_progress' %}Sedang Dilayani
+      {% else %}Selesai{% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="info-card">
+        <h5>📋 Informasi Antrian</h5>
+        <hr>
+        <p><strong>Poliklinik:</strong> {{ queue.poliklinik.name }}</p>
+        <p><strong>Dokter:</strong> Dr. {{ queue.doctor.user.get_full_name|default:queue.doctor.user.username }}</p>
+        <p><strong>Tanggal:</strong> {{ queue.appointment.date|date:"d M Y" }}</p>
+        <p><strong>Waktu:</strong> {{ queue.appointment.time|time:"H:i" }}</p>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="info-card">
+        <h5>⏱️ Estimasi Waktu</h5>
+        <hr>
+        <p><strong>Sisa Antrian:</strong> {{ queues_ahead }} orang di depan</p>
+        <p><strong>Estimasi Waktu Tunggu:</strong> {{ queue.estimated_wait_time }} menit</p>
+        {% if current_queue %}
+          <p><strong>Sedang Dilayani:</strong> Antrian #{{ current_queue.queue_number }}</p>
+        {% else %}
+          <p><strong>Sedang Dilayani:</strong> Belum ada</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if queue.status == 'waiting' %}
+    <div class="text-center mt-4">
+      <a href="{% url 'appointments:queue_checkin' queue.id %}" class="btn btn-success btn-lg">
+        ✅ Check In
+      </a>
+    </div>
+  {% elif queue.status == 'checked_in' %}
+    <div class="alert alert-info text-center">
+      <h5>✅ Anda sudah check in!</h5>
+      <p>Menunggu konfirmasi dari dokter untuk mulai dilayani.</p>
+    </div>
+  {% elif queue.status == 'in_progress' %}
+    <div class="alert alert-success text-center">
+      <h5>🎉 Giliran Anda!</h5>
+      <p>Silakan menuju ruang dokter untuk dilayani.</p>
+    </div>
+  {% endif %}
+
+  <div class="text-center mt-4">
+    <a href="{% url 'appointments:appointment_list' %}" class="btn btn-outline-secondary">
+      Kembali ke Daftar Janji Temu
+    </a>
+  </div>
+</div>
+
+<script>
+  // Auto refresh setiap 30 detik
+  setTimeout(function() {
+    location.reload();
+  }, 30000);
+</script>
+{% endblock %}
+

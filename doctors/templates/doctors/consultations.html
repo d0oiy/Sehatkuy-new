@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Daftar Konsultasi{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Daftar Konsultasi</h2>
+        <a href="{% url 'doctors:doctor_dashboard' %}" class="btn btn-outline-secondary">Kembali ke Dashboard</a>
+    </div>
+
+    <!-- Filter Status -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="?status=all" class="btn btn-outline-primary {% if status_filter == 'all' %}active{% endif %}">
+                    Semua
+                </a>
+                <a href="?status=active" class="btn btn-outline-info {% if status_filter == 'active' %}active{% endif %}">
+                    Berlangsung
+                </a>
+                <a href="?status=waiting" class="btn btn-outline-warning {% if status_filter == 'waiting' %}active{% endif %}">
+                    Menunggu
+                </a>
+                <a href="?status=done" class="btn btn-outline-success {% if status_filter == 'done' %}active{% endif %}">
+                    Selesai
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daftar Konsultasi -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if consultations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Pasien</th>
+                                <th>Poliklinik</th>
+                                <th>Keluhan</th>
+                                <th>Status</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for consultation in consultations %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ consultation.patient.get_full_name|default:consultation.patient.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ consultation.patient.email }}</small>
+                                    </td>
+                                    <td>
+                                        {% if consultation.doctor and consultation.doctor.poliklinik %}
+                                            {{ consultation.doctor.poliklinik.name }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ consultation.complaint|truncatewords:15|default:"-" }}</td>
+                                    <td>
+                                        {% if consultation.status == 'Menunggu' %}
+                                            <span class="badge bg-warning">Menunggu</span>
+                                        {% elif consultation.status == 'Berlangsung' %}
+                                            <span class="badge bg-info">Berlangsung</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Selesai</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ consultation.created_at|date:"d M Y, H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'doctors:consultation_detail' consultation.id %}" class="btn btn-sm btn-primary">
+                                            Buka Chat
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted">Tidak ada konsultasi ditemukan.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -55,3 +55,74 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"{self.patient} - {self.doctor} ({self.date})"
+
+
+class Queue(models.Model):
+    """Model untuk antrian online pasien"""
+    STATUS_WAITING = "waiting"
+    STATUS_CHECKED_IN = "checked_in"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_COMPLETED = "completed"
+    STATUS_CANCELLED = "cancelled"
+    
+    STATUS_CHOICES = [
+        (STATUS_WAITING, "Menunggu"),
+        (STATUS_CHECKED_IN, "Sudah Check In"),
+        (STATUS_IN_PROGRESS, "Sedang Dilayani"),
+        (STATUS_COMPLETED, "Selesai"),
+        (STATUS_CANCELLED, "Dibatalkan"),
+    ]
+    
+    appointment = models.OneToOneField(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name="queue"
+    )
+    patient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="queues"
+    )
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name="queues")
+    poliklinik = models.ForeignKey(Poliklinik, on_delete=models.CASCADE, related_name="queues")
+    
+    queue_number = models.IntegerField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_WAITING)
+    
+    # Waktu antrian
+    created_at = models.DateTimeField(auto_now_add=True)
+    checked_in_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Estimasi waktu tunggu (dalam menit)
+    estimated_wait_time = models.IntegerField(default=0, help_text="Estimasi waktu tunggu dalam menit")
+    
+    class Meta:
+        ordering = ['queue_number']
+        # Note: Unique constraint dengan condition tidak didukung oleh MariaDB
+        # Validasi unik dilakukan di level aplikasi
+    
+    def __str__(self):
+        return f"Antrian #{self.queue_number} - {self.patient.username} - {self.doctor}"
+    
+    @property
+    def position_in_queue(self):
+        """Posisi dalam antrian (berapa orang di depan)"""
+        if self.status == self.STATUS_COMPLETED or self.status == self.STATUS_CANCELLED:
+            return 0
+        
+        # Hitung antrian yang masih menunggu dengan nomor lebih kecil
+        current_queues = Queue.objects.filter(
+            doctor=self.doctor,
+            poliklinik=self.poliklinik,
+            appointment__date=self.appointment.date,
+            status__in=[self.STATUS_WAITING, self.STATUS_CHECKED_IN],
+            queue_number__lt=self.queue_number
+        ).count()
+        return current_queues
+    
+    @property
+    def is_current(self):
+        """Cek apakah ini antrian yang sedang dilayani"""
+        return self.status == self.STATUS_IN_PROGRESS

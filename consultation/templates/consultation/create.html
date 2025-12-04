@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="mb-4">
-    <a href="{% url 'consultation_dashboard' %}" class="text-decoration-none">&larr; Kembali ke konsul online</a>
+    <a href="{% url 'consultation:consultation_dashboard' %}" class="text-decoration-none">&larr; Kembali ke konsul online</a>
 </div>
 
 <div class="card shadow-sm">
@@ -18,7 +18,7 @@
             {{ form.as_p }}
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-success">Kirim Konsultasi</button>
-                <a href="{% url 'consultation_list' %}" class="btn btn-outline-secondary">Lihat Riwayat</a>
+                <a href="{% url 'consultation:consultation_list' %}" class="btn btn-outline-secondary">Lihat Riwayat</a>
             </div>
         </form>
     </div>

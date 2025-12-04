@@ -5,7 +5,7 @@
 
   <div class="d-flex justify-content-between mb-3">
     <h2>Daftar Dokter</h2>
-    <a href="{% url 'doctor_create' %}" class="btn btn-primary">Tambah Dokter</a>
+    <a href="{% url 'adminpanel:doctor_create' %}" class="btn btn-primary">Tambah Dokter</a>
   </div>
 
   <table class="table table-striped table-bordered align-middle">
@@ -37,8 +37,8 @@
         </td>
 
         <td class="text-center">
-          <a href="{% url 'doctor_edit' d.id %}" class="btn btn-warning btn-sm">Edit</a>
-          <a href="{% url 'doctor_delete' d.id %}"
+          <a href="{% url 'adminpanel:doctor_edit' d.id %}" class="btn btn-warning btn-sm">Edit</a>
+          <a href="{% url 'adminpanel:doctor_delete' d.id %}"
              class="btn btn-danger btn-sm"
              onclick="return confirm('Hapus dokter ini?')">
             Hapus

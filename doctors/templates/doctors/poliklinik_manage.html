@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Kelola Poliklinik{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🏥 Kelola Poliklinik</h2>
+        <a href="{% url 'doctors:doctor_dashboard' %}" class="btn btn-outline-secondary">Kembali ke Dashboard</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ poliklinik.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Status Saat Ini:</h6>
+                        {% if is_open %}
+                            <span class="badge bg-success" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                                ✅ BUKA
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                                ❌ TUTUP
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <p class="text-muted">{{ poliklinik.description }}</p>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="action" value="open" class="btn btn-success btn-lg">
+                                🔓 Buka Poliklinik
+                            </button>
+                            <button type="submit" name="action" value="close" class="btn btn-danger btn-lg">
+                                🔒 Tutup Poliklinik
+                            </button>
+                            <button type="submit" name="action" value="auto" class="btn btn-info btn-lg">
+                                ⏰ Ikuti Jadwal Otomatis
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">ℹ️ Informasi</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Mode Otomatis:</strong> Poliklinik akan buka/tutup sesuai jadwal operasional yang sudah ditetapkan.</p>
+                    <p><strong>Mode Manual:</strong> Anda dapat membuka atau menutup poliklinik secara manual kapan saja.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

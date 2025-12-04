@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Konfirmasi Janji Temu{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">📅 Konfirmasi Janji Temu</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Informasi Janji Temu</h5>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Poliklinik:</strong> {{ poliklinik.name }}</p>
+                                <p><strong>Dokter:</strong> Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}</p>
+                                <p><strong>Spesialisasi:</strong> {{ doctor.specialization }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Tanggal:</strong> {{ slot.date|date:"d M Y" }}</p>
+                                <p><strong>Waktu:</strong> {{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</p>
+                                <p><strong>Sisa Kuota:</strong> {{ slot.remaining_quota }} dari {{ slot.quota }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if not user.birth_date or not user.address %}
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Perhatian!</strong> Lengkapi data diri Anda terlebih dahulu:
+                            <ul class="mb-0 mt-2">
+                                {% if not user.birth_date %}<li>Tanggal lahir belum diisi</li>{% endif %}
+                                {% if not user.address %}<li>Alamat belum diisi</li>{% endif %}
+                            </ul>
+                            <a href="{% url 'profile_edit' %}" class="btn btn-warning btn-sm mt-2">
+                                Lengkapi Data Diri
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label">
+                                <strong>Alasan Janji Temu</strong>
+                            </label>
+                            {{ form.reason }}
+                            {% if form.reason.help_text %}
+                                <small class="form-text text-muted">{{ form.reason.help_text }}</small>
+                            {% endif %}
+                            {% if form.reason.errors %}
+                                <div class="text-danger">{{ form.reason.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'poliklinik:detail' poliklinik.slug %}" class="btn btn-secondary">
+                                Batal
+                            </a>
+                            <button type="submit" class="btn btn-primary" {% if not user.birth_date or not user.address %}disabled title="Lengkapi data diri terlebih dahulu"{% endif %}>
+                                ✅ Konfirmasi & Buat Janji Temu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

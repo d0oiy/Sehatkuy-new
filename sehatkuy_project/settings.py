@@ -24,12 +24,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
     'django.contrib.humanize',
-=======
 
     # Apps
->>>>>>> b0efa40 (update konsultasi)
     'home',
     'users',
     'consultation',
@@ -37,12 +34,14 @@ INSTALLED_APPS = [
     'doctors',
     'poliklinik',
     'appointments',
-<<<<<<< HEAD
     'pharmacy',
+    'articles',
+    'laboratory',
+    'emergency',
+
+    # Third party
     'rest_framework',
     'corsheaders',
-=======
->>>>>>> b0efa40 (update konsultasi)
 ]
 
 
@@ -91,10 +90,18 @@ WSGI_APPLICATION = 'sehatkuy_project.wsgi.application'
 # ==============================
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'sehatkuy',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
     }
 }
+
 
 
 # ==============================
@@ -138,34 +145,6 @@ LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/users/patient/dashboard/'
 LOGOUT_REDIRECT_URL = '/users/login/'
 
-<<<<<<< HEAD
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ]
-}
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ]
-}
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-GOOGLE_MAPS_API_KEY = "ISI_DENGAN_API_KEY_ANDA"
-=======
 # ⭐ FIX UTAMA: IZINKAN LOGOUT VIA GET (DJANGO 5)
 LOGOUT_VIEW_ALLOW_GET = True
 
@@ -183,7 +162,34 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 # ==============================
+# API & CORS
+# ==============================
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+
+# ==============================
+# MEDIA
+# ==============================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+GOOGLE_MAPS_API_KEY = "ISI_DENGAN_API_KEY_ANDA"
+
+
+# ==============================
 # DEFAULT FIELD TYPE
 # ==============================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
->>>>>>> b0efa40 (update konsultasi)

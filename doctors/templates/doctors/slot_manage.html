@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Kelola Slot Janji Temu{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📅 Kelola Slot Janji Temu</h2>
+        <a href="{% url 'doctors:doctor_dashboard' %}" class="btn btn-outline-secondary">Kembali ke Dashboard</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">➕ Tambah Slot Baru</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="create">
+                        <div class="mb-3">
+                            <label class="form-label">Tanggal</label>
+                            <input type="date" name="date" class="form-control" required min="{{ today|date:'Y-m-d' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Waktu Mulai</label>
+                            <input type="time" name="start_time" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Waktu Selesai</label>
+                            <input type="time" name="end_time" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Quota (Jumlah Pasien)</label>
+                            <input type="number" name="quota" class="form-control" value="10" min="1" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Tambah Slot</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📋 Daftar Slot</h5>
+                </div>
+                <div class="card-body">
+                    {% if slots %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Waktu</th>
+                                        <th>Quota</th>
+                                        <th>Tersedia</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for slot in slots %}
+                                        <tr>
+                                            <td>{{ slot.date|date:"d M Y" }}</td>
+                                            <td>{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</td>
+                                            <td>{{ slot.quota }}</td>
+                                            <td>
+                                                <span class="badge {% if slot.available %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ slot.remaining_quota }} tersedia
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editModal{{ slot.id }}">
+                                                        Edit Quota
+                                                    </button>
+                                                    {% if slot.appointments.count == 0 %}
+                                                        <form method="post" class="d-inline" onsubmit="return confirm('Hapus slot ini?');">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="delete">
+                                                            <input type="hidden" name="slot_id" value="{{ slot.id }}">
+                                                            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                                        </form>
+                                                    {% else %}
+                                                        <button class="btn btn-sm btn-secondary" disabled title="Slot tidak dapat dihapus karena sudah ada janji temu">
+                                                            Hapus
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Modal Edit Quota -->
+                                        <div class="modal fade" id="editModal{{ slot.id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Edit Quota Slot</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="post">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="update_quota">
+                                                        <input type="hidden" name="slot_id" value="{{ slot.id }}">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Quota Baru (Min: {{ slot.used_quota }})</label>
+                                                                <input type="number" name="quota" class="form-control" value="{{ slot.quota }}" min="{{ slot.used_quota }}" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                            <button type="submit" class="btn btn-primary">Simpan</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">Belum ada slot yang dibuat.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

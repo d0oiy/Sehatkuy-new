@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Detail Janji Temu{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Detail Janji Temu</h2>
+        <a href="{% url 'doctors:appointments' %}" class="btn btn-outline-secondary">Kembali ke Daftar</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Informasi Janji Temu</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td width="30%"><strong>Pasien:</strong></td>
+                            <td>{{ appointment.patient.get_full_name|default:appointment.patient.username }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ appointment.patient.email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Poliklinik:</strong></td>
+                            <td>{{ appointment.poliklinik.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tanggal:</strong></td>
+                            <td>{{ appointment.date|date:"d M Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Waktu:</strong></td>
+                            <td>{{ appointment.time|time:"H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>No. Antrian:</strong></td>
+                            <td>
+                                {% if appointment.queue_number %}
+                                    <span class="badge bg-primary" style="font-size: 1.2rem;">#{{ appointment.queue_number }}</span>
+                                {% else %}
+                                    <span class="text-muted">Belum ditetapkan</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                {% if appointment.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending - Perlu Ditinjau</span>
+                                {% elif appointment.status == 'approved' %}
+                                    <span class="badge bg-success">Disetujui</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Dibatalkan</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dibuat:</strong></td>
+                            <td>{{ appointment.created_at|date:"d M Y, H:i" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Alasan Janji Temu</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ appointment.reason }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Aksi</h5>
+                </div>
+                <div class="card-body">
+                    {% if appointment.status == 'pending' %}
+                        <form method="post" class="mb-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve">
+                            <button type="submit" class="btn btn-success w-100 mb-2">
+                                ✅ Setujui Janji Temu
+                            </button>
+                        </form>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel">
+                            <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Apakah Anda yakin ingin membatalkan janji temu ini?')">
+                                ❌ Batalkan Janji Temu
+                            </button>
+                        </form>
+                    {% elif appointment.status == 'approved' %}
+                        <div class="alert alert-success">
+                            Janji temu ini telah disetujui.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            Janji temu ini telah dibatalkan.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Link ke Konsultasi Pasien -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Konsultasi Pasien</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'doctors:consultations' %}?patient={{ appointment.patient.id }}" class="btn btn-outline-primary w-100">
+                        Lihat Konsultasi Pasien
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

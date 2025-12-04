@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Sehatkuy{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">{{ title }}</h4>
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+              {{ form.title }}
+              {% if form.title.errors %}
+                <div class="text-danger small">{{ form.title.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.slug.id_for_label }}" class="form-label">{{ form.slug.label }}</label>
+              {{ form.slug }}
+              <small class="form-text text-muted">URL-friendly version of the title (e.g., "artikel-kesehatan")</small>
+              {% if form.slug.errors %}
+                <div class="text-danger small">{{ form.slug.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.excerpt.id_for_label }}" class="form-label">{{ form.excerpt.label }}</label>
+              {{ form.excerpt }}
+              {% if form.excerpt.errors %}
+                <div class="text-danger small">{{ form.excerpt.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+              {{ form.image }}
+              {% if article and article.image %}
+                <div class="mt-2">
+                  <img src="{{ article.image.url }}" alt="Current image" style="max-height: 200px;">
+                </div>
+              {% endif %}
+              {% if form.image.errors %}
+                <div class="text-danger small">{{ form.image.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }}</label>
+              {{ form.content }}
+              {% if form.content.errors %}
+                <div class="text-danger small">{{ form.content.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3 form-check">
+              {{ form.is_published }}
+              <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                {{ form.is_published.label }}
+              </label>
+              {% if form.is_published.errors %}
+                <div class="text-danger small">{{ form.is_published.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-success">Simpan</button>
+              <a href="{% url 'articles:admin_list' %}" class="btn btn-secondary">Batal</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

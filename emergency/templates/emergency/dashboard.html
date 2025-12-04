@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gawat Darurat - SehatKuy{% endblock %}
+{% block content %}
+<section class="py-5" style="background: linear-gradient(135deg, #ef476f 0%, #ff9a62 100%); color: white;">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <p class="text-uppercase fw-semibold">Layanan Tanggap Darurat</p>
+        <h1 class="display-5 fw-bold">Butuh Pertolongan Darurat? Hubungi Kami Segera.</h1>
+        <p class="lead mt-3">Informasi rumah sakit rujukan, nomor ambulans, dan kontak penting tersedia 24/7.</p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          {% for contact in contacts|slice:":2" %}
+            <a href="tel:{{ contact.phone_number }}" class="btn btn-light btn-lg text-danger fw-bold">
+              ☎ {{ contact.phone_number }} — {{ contact.label }}
+            </a>
+          {% endfor %}
+          <a href="#hospitals" class="btn btn-outline-light btn-lg">Daftar Rumah Sakit</a>
+        </div>
+      </div>
+      <div class="col-lg-5 text-center">
+        <img src="{% static 'images/sehatkuylogo.png' %}" alt="Emergency" class="img-fluid" style="max-height: 260px;">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 bg-light" id="hospitals">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold mb-2">Daftar Rumah Sakit Rujukan</h2>
+        <p class="text-muted mb-0">Tersedia layanan IGD & ambulans 24 jam.</p>
+      </div>
+      <a href="tel:119" class="btn btn-danger btn-lg">🚑 119 Layanan Nasional</a>
+    </div>
+    <div class="row g-4">
+      {% for facility in hospitals %}
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="fw-bold">{{ facility.name }}</h5>
+                <p class="text-muted small mb-2">{{ facility.address }}</p>
+              </div>
+              <span class="badge bg-danger-subtle text-danger">Rumah Sakit</span>
+            </div>
+            <div class="d-flex flex-wrap gap-3 small">
+              <div>📞 <a href="tel:{{ facility.phone_number }}">{{ facility.phone_number }}</a></div>
+              {% if facility.ambulance_number %}
+                <div>🚑 <a href="tel:{{ facility.ambulance_number }}">{{ facility.ambulance_number }}</a></div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info">Data rumah sakit belum tersedia.</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h4 class="fw-bold mb-3">Kontak Puskesmas & Fasilitas Terdekat</h4>
+            <div class="list-group">
+              {% for facility in puskesmas %}
+              <div class="list-group-item">
+                <div class="fw-semibold">{{ facility.name }}</div>
+                <p class="text-muted small mb-1">{{ facility.address }}</p>
+                <div class="small">📞 <a href="tel:{{ facility.phone_number }}">{{ facility.phone_number }}</a></div>
+              </div>
+              {% empty %}
+              <div class="list-group-item text-muted">Data puskesmas belum tersedia.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <h4 class="fw-bold mb-3">Nomor Darurat Penting</h4>
+            <ul class="list-group">
+              {% for contact in contacts %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold">{{ contact.label }}</div>
+                  <div class="text-muted small">{{ contact.description }}</div>
+                </div>
+                <a href="tel:{{ contact.phone_number }}" class="btn btn-outline-danger">
+                  {{ contact.phone_number }}
+                </a>
+              </li>
+              {% empty %}
+              <li class="list-group-item text-muted">Belum ada kontak darurat tambahan.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

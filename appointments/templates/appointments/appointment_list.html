@@ -14,16 +14,42 @@
                     <th>Tanggal</th>
                     <th>Waktu</th>
                     <th>Status</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 {% for appt in appointments %}
                 <tr>
-                    <td>Dr. {{ appt.doctor.user.get_full_name }}</td>
+                    <td>Dr. {{ appt.doctor.user.get_full_name|default:appt.doctor.user.username }}</td>
                     <td>{{ appt.poliklinik.name }}</td>
-                    <td>{{ appt.date }}</td>
-                    <td>{{ appt.time }}</td>
-                    <td>{{ appt.get_status_display }}</td>
+                    <td>{{ appt.date|date:"d M Y" }}</td>
+                    <td>{{ appt.time|time:"H:i" }}</td>
+                    <td>
+                        {% if appt.status == 'pending' %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% elif appt.status == 'approved' %}
+                            <span class="badge bg-success">Disetujui</span>
+                        {% else %}
+                            <span class="badge bg-danger">Dibatalkan</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if appt.status == 'approved' %}
+                            {% if appt.date == today %}
+                                {% if appt.has_queue %}
+                                    <a href="{% url 'appointments:queue_status' appt.queue_id %}" class="btn btn-sm btn-primary">
+                                        🎫 Lihat Antrian
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'appointments:queue_take' appt.id %}" class="btn btn-sm btn-success">
+                                        🎫 Ambil Antrian
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Belum waktunya</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

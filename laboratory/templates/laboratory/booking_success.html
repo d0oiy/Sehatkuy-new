@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Laboratorium Berhasil{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0 text-center p-4">
+        <div class="display-3 text-success mb-3">✔</div>
+        <h3 class="fw-bold">Permintaan Booking Diterima</h3>
+        <p class="text-muted">Tim laboratorium kami akan menghubungi Anda paling lambat 1x24 jam.</p>
+        <div class="bg-light rounded-3 p-3 text-start mb-3">
+          <p class="mb-1"><strong>Layanan:</strong> {{ booking.service.name }}</p>
+          <p class="mb-1"><strong>Jadwal:</strong> {{ booking.preferred_date|date:"d M Y" }} • {{ booking.preferred_time|time:"H:i" }}</p>
+          <p class="mb-1"><strong>Status:</strong> {{ booking.get_status_display }}</p>
+        </div>
+        <a href="{% url 'laboratory:home' %}" class="btn btn-success w-100 mb-2">Kembali ke Layanan Laboratorium</a>
+        <a href="{% url 'users:patient_dashboard' %}" class="btn btn-outline-success w-100">Ke Dashboard Pasien</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

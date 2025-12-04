@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Kelola Antrian{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🎫 Kelola Antrian - {{ today|date:"d M Y" }}</h2>
+        <a href="{% url 'doctors:doctor_dashboard' %}" class="btn btn-outline-secondary">Kembali ke Dashboard</a>
+    </div>
+
+    <!-- Antrian yang Sedang Dilayani -->
+    {% if current_queue %}
+        <div class="card shadow-sm mb-4 border-success border-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">✅ Sedang Dilayani</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3>Antrian #{{ current_queue.queue_number }}</h3>
+                        <p class="mb-1"><strong>Pasien:</strong> {{ current_queue.patient.get_full_name|default:current_queue.patient.username }}</p>
+                        <p class="mb-0"><strong>Mulai:</strong> {{ current_queue.started_at|date:"H:i" }}</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="next">
+                            <input type="hidden" name="queue_id" value="{{ current_queue.id }}">
+                            <button type="submit" class="btn btn-primary btn-lg" onclick="return confirm('Selesaikan antrian ini dan lanjut ke antrian berikutnya?');">
+                                ✅ Selesai & Lanjut
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <h5>ℹ️ Belum ada antrian yang sedang dilayani</h5>
+            <p>Klik "Mulai" pada antrian berikutnya untuk mulai melayani.</p>
+        </div>
+    {% endif %}
+
+    <!-- Daftar Antrian -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">📋 Daftar Antrian</h5>
+        </div>
+        <div class="card-body">
+            {% if queues %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>No. Antrian</th>
+                                <th>Pasien</th>
+                                <th>Status</th>
+                                <th>Waktu</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for queue in queues %}
+                                <tr class="{% if queue.status == 'in_progress' %}table-success{% elif queue.status == 'checked_in' %}table-info{% endif %}">
+                                    <td>
+                                        <span class="badge bg-primary" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                                            #{{ queue.queue_number }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ queue.patient.get_full_name|default:queue.patient.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ queue.patient.email }}</small>
+                                    </td>
+                                    <td>
+                                        {% if queue.status == 'waiting' %}
+                                            <span class="badge bg-warning">Menunggu</span>
+                                        {% elif queue.status == 'checked_in' %}
+                                            <span class="badge bg-info">Sudah Check In</span>
+                                        {% elif queue.status == 'in_progress' %}
+                                            <span class="badge bg-success">Sedang Dilayani</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if queue.checked_in_at %}
+                                            Check in: {{ queue.checked_in_at|date:"H:i" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if queue.status == 'waiting' %}
+                                            <form method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="confirm_checkin">
+                                                <input type="hidden" name="queue_id" value="{{ queue.id }}">
+                                                <button type="submit" class="btn btn-sm btn-info">
+                                                    ✅ Konfirmasi Check In
+                                                </button>
+                                            </form>
+                                        {% elif queue.status == 'checked_in' and not current_queue %}
+                                            <form method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="next">
+                                                <input type="hidden" name="queue_id" value="{{ queue.id }}">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    ▶️ Mulai
+                                                </button>
+                                            </form>
+                                        {% elif queue.status == 'in_progress' %}
+                                            <span class="badge bg-success">Sedang Dilayani</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center">Belum ada antrian hari ini.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto refresh setiap 10 detik
+    setTimeout(function() {
+        location.reload();
+    }, 10000);
+</script>
+{% endblock %}
+

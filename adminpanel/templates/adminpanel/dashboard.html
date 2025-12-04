@@ -1,17 +1,7 @@
-<<<<<<< HEAD
+{% extends 'adminpanel/base.html' %}
 {% load static %}
 {% load currency_filters %}
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Admin | Sehatkuy</title>
-=======
-{% extends 'adminpanel/base.html' %}
 {% block content %}
-<h2 class="mb-4">Dashboard Admin</h2>
->>>>>>> b0efa40 (update konsultasi)
 
 <div class="row g-3 mb-4">
   <div class="col-md-3"><div class="card p-3">Total Users<br><strong>{{ total_users }}</strong></div></div>
@@ -237,28 +227,41 @@
 
     <!-- Statistik Cards -->
     <div class="row g-4 text-center">
-      <div class="col-md-3 col-6">
+      <div class="col-md-2 col-6">
         <div class="card p-3 shadow-sm">
           <h6 class="text-muted">Total Pengguna</h6>
           <h3 class="fw-bold text-primary">{{ total_users|default:0 }}</h3>
         </div>
       </div>
-      <div class="col-md-3 col-6">
+      <div class="col-md-2 col-6">
         <div class="card p-3 shadow-sm">
           <h6 class="text-muted">Pasien</h6>
           <h3 class="fw-bold text-success">{{ total_patients|default:0 }}</h3>
         </div>
       </div>
-      <div class="col-md-3 col-6">
+      <div class="col-md-2 col-6">
         <div class="card p-3 shadow-sm">
           <h6 class="text-muted">Dokter</h6>
           <h3 class="fw-bold text-info">{{ total_doctors|default:0 }}</h3>
         </div>
       </div>
-      <div class="col-md-3 col-6">
+      <div class="col-md-2 col-6">
         <div class="card p-3 shadow-sm">
           <h6 class="text-muted">Konsultasi</h6>
           <h3 class="fw-bold text-warning">{{ total_consultations|default:0 }}</h3>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="card p-3 shadow-sm">
+          <h6 class="text-muted">Artikel</h6>
+          <h3 class="fw-bold text-danger">{{ total_articles|default:0 }}</h3>
+          <small class="text-muted">{{ published_articles|default:0 }} diterbitkan</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="card p-3 shadow-sm">
+          <h6 class="text-muted">Aktivitas</h6>
+          <h3 class="fw-bold text-secondary">{{ activities|length|default:0 }}</h3>
         </div>
       </div>
     </div>
@@ -364,6 +367,65 @@
       </div>
     </div>
 
+    <!-- Artikel Terbaru -->
+    {% if recent_articles %}
+    <div class="row mt-5">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-journal-text"></i> Artikel Terbaru</h5>
+            <a href="{% url 'articles:admin_list' %}" class="btn btn-light btn-sm">
+              <i class="bi bi-arrow-right"></i> Kelola Artikel
+            </a>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Judul</th>
+                    <th>Penulis</th>
+                    <th>Status</th>
+                    <th>Views</th>
+                    <th>Tanggal</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for article in recent_articles %}
+                    <tr>
+                      <td><strong>{{ article.title }}</strong></td>
+                      <td>{{ article.author.get_full_name|default:article.author.username }}</td>
+                      <td>
+                        {% if article.is_published %}
+                          <span class="badge bg-success">Diterbitkan</span>
+                        {% else %}
+                          <span class="badge bg-secondary">Draft</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ article.views_count }}</td>
+                      <td>{{ article.created_at|date:"d M Y" }}</td>
+                      <td>
+                        <div class="btn-group">
+                          <a href="{% url 'articles:detail' article.slug %}" class="btn btn-sm btn-info" target="_blank">
+                            <i class="bi bi-eye"></i> Lihat
+                          </a>
+                          <a href="{% url 'articles:admin_edit' article.id %}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil"></i> Edit
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Quick Access -->
     <div class="d-flex flex-wrap gap-3 justify-content-center mt-5">
       <a href="{% url 'adminpanel:user_list' %}" class="btn btn-outline-primary btn-dashboard">
@@ -372,13 +434,19 @@
       <a href="{% url 'adminpanel:doctor_list' %}" class="btn btn-outline-success btn-dashboard">
         <i class="bi bi-person-badge-fill"></i> Kelola Dokter
       </a>
+      <a href="{% url 'articles:admin_list' %}" class="btn btn-outline-purple btn-dashboard" style="border-color: #6f42c1; color: #6f42c1;">
+        <i class="bi bi-journal-text"></i> Kelola Artikel
+      </a>
+      <a href="{% url 'articles:admin_create' %}" class="btn btn-outline-purple btn-dashboard" style="border-color: #6f42c1; color: #6f42c1; background: linear-gradient(135deg, #6f42c1, #8b5cf6); color: white; border: none;">
+        <i class="bi bi-plus-circle"></i> Buat Artikel Baru
+      </a>
       <a href="{% url 'pharmacy:medicine_list' %}" class="btn btn-outline-info btn-dashboard">
         <i class="bi bi-capsule"></i> Kelola Obat
       </a>
       <a href="{% url 'pharmacy:patient_orders' %}" class="btn btn-outline-danger btn-dashboard">
         <i class="bi bi-receipt"></i> Lihat Pesanan Pasien
       </a>
-      <a href="{% url 'consultation:consultation_list' %}" class="btn btn-outline-warning btn-dashboard">
+      <a href="{% url 'adminpanel:consultation_list' %}" class="btn btn-outline-warning btn-dashboard">
         <i class="bi bi-chat-left-text-fill"></i> Lihat Konsultasi
       </a>
       <a href="{% url 'adminpanel:activity_log' %}" class="btn btn-outline-secondary btn-dashboard">
@@ -412,15 +480,16 @@
     new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: ['Pasien', 'Dokter', 'Konsultasi'],
+        labels: ['Pasien', 'Dokter', 'Konsultasi', 'Artikel'],
         datasets: [{
           label: 'Jumlah Data',
           data: [
             {{ total_patients|default:"0" }},
             {{ total_doctors|default:"0" }},
-            {{ total_consultations|default:"0" }}
+            {{ total_consultations|default:"0" }},
+            {{ total_articles|default:"0" }}
           ],
-          backgroundColor: ['#0d6efd', '#20c997', '#ffc107'],
+          backgroundColor: ['#0d6efd', '#20c997', '#ffc107', '#6f42c1'],
           borderRadius: 8,
           borderWidth: 1
         }]

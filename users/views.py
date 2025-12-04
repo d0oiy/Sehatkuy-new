@@ -1,13 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import CustomUser
+from .forms import ProfileEditForm
 from consultation.models import Consultation
-from appointments.models import Appointment
+from appointments.models import Appointment, Queue
 from pharmacy.models import MedicineOrder, Medicine
 from pharmacy.forms import MedicineForm
 from django.utils import timezone
+from datetime import date
 
 
 # 🧩 REGISTER VIEW
@@ -52,7 +54,7 @@ def login_view(request):
         if request.user.is_superuser or request.user.role == 'admin':
             return redirect('admin_dashboard')
         elif request.user.role == 'dokter':
-            return redirect('doctor_dashboard')
+            return redirect('doctors:doctor_dashboard')
         elif request.user.role == 'pasien':
             return redirect('patient_dashboard')
         else:
@@ -103,36 +105,59 @@ def patient_dashboard(request):
     if request.user.role != 'pasien':
         messages.error(request, 'Akses ditolak.')
         return redirect('login')
+    
     # Ambil data konsultasi, janji temu, dan pesanan pasien
-    consultations = Consultation.objects.filter(patient=request.user).order_by('-date')[:8]
-    appointments = Appointment.objects.filter(patient=request.user).order_by('-date')[:8]
-    orders = MedicineOrder.objects.filter(patient=request.user).order_by('-created_at')[:8]
+    consultations = Consultation.objects.filter(
+        patient=request.user
+    ).select_related('doctor', 'doctor__user', 'doctor__poliklinik').order_by('-created_at')[:8]
+    
+    appointments = Appointment.objects.filter(
+        patient=request.user
+    ).select_related('doctor', 'doctor__user', 'poliklinik').order_by('-date', '-time')[:8]
+    
+    orders = MedicineOrder.objects.filter(
+        patient=request.user
+    ).order_by('-created_at')[:8]
+
+    # Statistik
+    total_consultations = Consultation.objects.filter(patient=request.user).count()
+    total_appointments = Appointment.objects.filter(patient=request.user).count()
+    total_orders = MedicineOrder.objects.filter(patient=request.user).count()
+    approved_appointments = Appointment.objects.filter(
+        patient=request.user, 
+        status='approved'
+    ).count()
+    
+    # Ambil antrian aktif hari ini
+    today = date.today()
+    active_queues = Queue.objects.filter(
+        patient=request.user,
+        appointment__date=today,
+        status__in=[Queue.STATUS_WAITING, Queue.STATUS_CHECKED_IN, Queue.STATUS_IN_PROGRESS]
+    ).select_related('appointment', 'doctor', 'poliklinik').order_by('queue_number')
 
     context = {
         'consultations': consultations,
         'appointments': appointments,
         'orders': orders,
+        'total_consultations': total_consultations,
+        'total_appointments': total_appointments,
+        'total_orders': total_orders,
+        'approved_appointments': approved_appointments,
+        'active_queues': active_queues,
+        'today': today,
     }
     return render(request, 'users/patient_dashboard.html', context)
 
 
-# 👨‍⚕️ DASHBOARD DOKTER
+# 👨‍⚕️ DASHBOARD DOKTER (Legacy - redirect ke doctors app)
 @login_required
 def doctor_dashboard(request):
     if request.user.role != 'dokter':
         messages.error(request, 'Akses ditolak.')
         return redirect('login')
-    # Tampilkan konsultasi yang terkait dengan dokter ini
-    name_key = request.user.username
-    consultations = Consultation.objects.filter(doctor_name__icontains=name_key).order_by('-date')[:12]
-    # Tampilkan pesanan yang berkaitan dengan pasien dokter ini (jangan menampilkan semua pesanan)
-    patient_ids = consultations.values_list('patient_id', flat=True).distinct()
-    orders = MedicineOrder.objects.filter(patient_id__in=patient_ids).order_by('-created_at')[:12]
-    context = {
-        'consultations': consultations,
-        'orders': orders,
-    }
-    return render(request, 'users/doctor_dashboard.html', context)
+    # Redirect ke dashboard dokter yang baru
+    return redirect('doctors:doctor_dashboard')
 
 
 # 🧑‍💼 DASHBOARD ADMIN
@@ -179,4 +204,37 @@ def admin_dashboard(request):
     }
 
     return render(request, 'users/admin_dashboard.html', context)
+
+
+# ✏️ EDIT PROFIL USER
+@login_required
+def profile_edit(request):
+    """Halaman edit profil untuk semua user"""
+    user = request.user
+    
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profil berhasil diperbarui!')
+            
+            # Redirect sesuai role
+            if user.role == 'pasien':
+                return redirect('patient_dashboard')
+            elif user.role == 'dokter':
+                return redirect('doctors:doctor_dashboard')
+            elif user.role == 'admin' or user.is_superuser:
+                return redirect('admin_dashboard')
+            else:
+                return redirect('home')
+        else:
+            messages.error(request, 'Terdapat kesalahan dalam form. Silakan periksa kembali.')
+    else:
+        form = ProfileEditForm(instance=user)
+    
+    context = {
+        'form': form,
+        'user': user,
+    }
+    return render(request, 'users/profile_edit.html', context)
 

@@ -79,7 +79,7 @@ def consultation_create(request):
                 request,
                 "Konsultasi berhasil dikirim! Dokter akan meninjau dan merespons melalui chatbot.",
             )
-            return redirect("consultation_list")
+            return redirect("consultation:consultation_list")
     else:
         form = ConsultationForm()
     return render(request, "consultation/create.html", {"form": form})
@@ -131,7 +131,7 @@ def consultation_chat(request, doctor_id):
                 consultation.complaint = user_message
             consultation.status = Consultation.STATUS_ACTIVE
             consultation.save(update_fields=["complaint", "status"])
-            return redirect("consultation_chat", doctor_id=doctor.id)
+            return redirect("consultation:consultation_chat", doctor_id=doctor.id)
     else:
         form = ConsultationMessageForm()
 

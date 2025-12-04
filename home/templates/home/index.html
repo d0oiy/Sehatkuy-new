@@ -8,6 +8,9 @@
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/sehatkuy-styles.css' %}">
@@ -35,6 +38,7 @@
       <ul class="navbar-nav ms-auto align-items-center">
         <li class="nav-item"><a class="nav-link" href="#about">Tentang</a></li>
         <li class="nav-item"><a class="nav-link" href="#services">Layanan</a></li>
+        <li class="nav-item"><a class="nav-link" href="#articles">Artikel</a></li>
         <li class="nav-item"><a class="nav-link" href="#contact">Kontak</a></li>
 
         {% if user.is_authenticated %}
@@ -176,23 +180,6 @@
           </div>
         </div>
 
-        <div class="col-md-6 col-lg-3">
-          <div class="service-card p-4 h-100">
-            <div class="service-icon">❤️</div>
-            <h5 class="fw-bold mt-2">Kardiologi</h5>
-            <p class="small text-muted">Perawatan jantung dengan fasilitas modern.</p>
-            <a href="#" class="service-more">Pelajari Lebih Lanjut →</a>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-lg-3">
-          <div class="service-card p-4 h-100">
-            <div class="service-icon">🧠</div>
-            <h5 class="fw-bold mt-2">Neurologi</h5>
-            <p class="small text-muted">Penanganan kondisi neurologis.</p>
-            <a href="#" class="service-more">Pelajari Lebih Lanjut →</a>
-          </div>
-        </div>
 
         <div class="col-md-6 col-lg-3">
           <div class="service-card p-4 h-100">
@@ -218,22 +205,21 @@
           <span class="section-badge small">Tentang Sehatkuy</span>
           <h2 class="section-title">Menjaga Kesehatan Anda, Setiap Langkah</h2>
           <p class="lead text-muted">
-            Sehatkuy telah melayani masyarakat selama bertahun-tahun dengan tim dokter berdedikasi dan fasilitas lengkap.
-            Misi kami adalah menghadirkan layanan kesehatan berkualitas yang mudah diakses.
+            Sehatkuy adalah aplikasi yang dirancang untuk membantu anda dalam hal kesehatan, dengan kolaborasi bersama Puskes membantu anda secara online
           </p>
 
           <div class="row mt-4 g-3">
             <div class="col-4 text-center">
-              <div class="about-stat">15+</div>
-              <div class="small text-muted">Tahun Pengalaman</div>
+              <div class="about-stat">5+</div>
+              <div class="small text-muted">Fitur</div>
             </div>
             <div class="col-4 text-center">
-              <div class="about-stat">50K+</div>
-              <div class="small text-muted">Pasien Terlayani</div>
+              <div class="about-stat">97,28</div>
+              <div class="small text-muted">Nilai IKM (Sangat Baik)</div>
             </div>
             <div class="col-4 text-center">
-              <div class="about-stat">100+</div>
-              <div class="small text-muted">Tenaga Medis</div>
+              <div class="about-stat">77%</div>
+              <div class="small text-muted">Tingkat Kepuasan Pasien</div>
             </div>
           </div>
         </div>
@@ -274,6 +260,115 @@
     </div>
   </section>
 
+  <!-- ARTICLES -->
+  <section id="articles" class="section section--pad bg-light">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="section-badge">Edukasi Kesehatan</span>
+        <h2 class="section-title">Artikel Kesehatan Terbaru</h2>
+        <p class="section-sub text-muted">Informasi kesehatan terpercaya untuk Anda dan keluarga</p>
+      </div>
+
+      {% if latest_articles %}
+        <div class="row g-4">
+          {% for article in latest_articles %}
+            <div class="col-md-4">
+              <div class="card h-100 shadow-sm border-0 article-card-modern">
+                {% if article.image %}
+                  <div class="article-image-wrapper" style="height: 200px; overflow: hidden;">
+                    <img src="{{ article.image.url }}" class="card-img-top" alt="{{ article.title }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;">
+                  </div>
+                {% else %}
+                  <div class="card-img-top bg-gradient-primary d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <span class="display-1 text-white">📄</span>
+                  </div>
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title fw-bold">{{ article.title }}</h5>
+                  <p class="card-text text-muted small flex-grow-1">
+                    {{ article.excerpt|default:article.content|truncatewords:20 }}
+                  </p>
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <small class="text-muted">
+                      <i class="bi bi-calendar"></i> {{ article.created_at|date:"d M Y" }}
+                    </small>
+                    <small class="text-muted">
+                      <i class="bi bi-eye"></i> {{ article.views_count }}
+                    </small>
+                  </div>
+                  <a href="{% url 'articles:detail' article.slug %}" class="btn btn-success w-100">
+                    Baca Selengkapnya →
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-5">
+          <div class="display-1 mb-3">📚</div>
+          <h4 class="mb-3">Belum Ada Artikel</h4>
+          <p class="text-muted mb-4">Artikel kesehatan akan segera hadir untuk memberikan informasi terpercaya.</p>
+        </div>
+      {% endif %}
+
+      <div class="text-center mt-5">
+        <a href="{% url 'articles:list' %}" class="btn btn-outline-success btn-lg" style="text-decoration: none; cursor: pointer;">
+          📚 Lihat Semua Artikel
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPECIAL SERVICES -->
+  <section id="priority-services" class="section section--pad">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="section-badge">Layanan Prioritas</span>
+        <h2 class="section-title">Laboratorium & Gawat Darurat</h2>
+        <p class="section-sub text-muted">Akses layanan penting hanya dengan sekali klik.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm border-0">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <h4 class="fw-bold">Laboratorium Terpadu</h4>
+                  <p class="text-muted">Paket medical check up, pengambilan sampel di rumah, hasil digital cepat.</p>
+                </div>
+                <span class="badge bg-success-subtle text-success">Baru</span>
+              </div>
+              <ul class="text-muted small mb-4">
+                <li>120+ paket pemeriksaan siap pakai</li>
+                <li>Hasil otomatis terhubung dengan dokter</li>
+                <li>Notifikasi real-time</li>
+              </ul>
+              <div class="d-flex gap-3">
+                <a href="{% url 'laboratory:home' %}" class="btn btn-success flex-fill">Lihat Layanan</a>
+                <a href="{% url 'laboratory:booking' %}" class="btn btn-outline-success flex-fill">Booking Lab</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm border-0 bg-danger-subtle">
+            <div class="card-body">
+              <h4 class="fw-bold">Gawat Darurat 24/7</h4>
+              <p class="text-muted">Kontak rumah sakit rujukan, ambulans, dan call center nasional.</p>
+              <div class="display-6 fw-bold text-danger mb-3">119</div>
+              <p class="small text-muted mb-4">Hubungi segera jika terjadi keadaan darurat medis.</p>
+              <div class="d-flex gap-3">
+                <a href="tel:119" class="btn btn-danger flex-fill">Hubungi 119</a>
+                <a href="{% url 'emergency:dashboard' %}" class="btn btn-outline-danger flex-fill">Lihat Kontak RS</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- TESTIMONIALS -->
   <section id="testimonials" class="section section--pad">
     <div class="container">
@@ -287,21 +382,21 @@
         <div class="col-md-4">
           <div class="card testimonial p-4 h-100">
             <p class="text-muted">"Layanan konsultasi online sangat membantu. Saya tidak perlu meninggalkan rumah."</p>
-            <div class="mt-3 fw-bold">Sarah J.</div>
+            <div class="mt-3 fw-bold">Bapak Edo.</div>
             <div class="small text-muted">Pasien</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card testimonial p-4 h-100">
             <p class="text-muted">"Proses booking janji cepat dan dokter sangat profesional."</p>
-            <div class="mt-3 fw-bold">Michael C.</div>
+            <div class="mt-3 fw-bold">Bapak Rizky</div>
             <div class="small text-muted">Pasien</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card testimonial p-4 h-100">
-            <p class="text-muted">"Pengingat obatnya membantu keluarga saya untuk rutin minum obat."</p>
-            <div class="mt-3 fw-bold">Priya S.</div>
+            <p class="text-muted">"Layanan pemesanan obat nya sangat membantu buat saya yang jarang keluar rumah"</p>
+            <div class="mt-3 fw-bold">Bapak Arya Wardaba</div>
             <div class="small text-muted">Pasien</div>
           </div>
         </div>
@@ -322,13 +417,13 @@
         <div class="col-lg-4">
           <div class="card p-4 shadow-sm">
             <h6 class="fw-bold">Telepon</h6>
-            <p class="small text-muted">+62 21 1234 5678 (Senin–Jumat 8AM–8PM)</p>
+            <p class="small text-muted">+62 852-6707-1757 (Senin–Jumat 8AM–8PM)</p>
             <hr/>
             <h6 class="fw-bold">Email</h6>
-            <p class="small text-muted">info@sehatkuy.com</p>
+            <p class="small text-muted">infosehatkuy@gmail.com</p>
             <hr/>
             <h6 class="fw-bold">Alamat</h6>
-            <p class="small text-muted">Jl. Kesehatan No. 123, Jakarta</p>
+            <p class="small text-muted">Jl. Cemara Raya No.147, Sungai Miai, Kec. Banjarmasin Utara, Kota Banjarmasin, Kalimantan Selatan 70123</p>
           </div>
         </div>
 
@@ -388,6 +483,7 @@
         <ul class="list-unstyled small">
           <li><a href="#home" class="text-muted text-decoration-none">Home</a></li>
           <li><a href="#services" class="text-muted text-decoration-none">Layanan</a></li>
+          <li><a href="#articles" class="text-muted text-decoration-none">Artikel</a></li>
           <li><a href="#about" class="text-muted text-decoration-none">Tentang</a></li>
         </ul>
       </div>
@@ -396,9 +492,10 @@
       <div class="col-md-3">
         <h6 class="fw-bold mb-3 text-success">Layanan Kami</h6>
         <ul class="list-unstyled small">
-          <li><a href="#" class="text-muted text-decoration-none">Konsultasi Online</a></li>
-          <li><a href="#" class="text-muted text-decoration-none">Buat Janji</a></li>
-          <li><a href="#" class="text-muted text-decoration-none">Pesan Obat</a></li>
+          <li><a href="{% url 'consultation:consultation_dashboard' %}" class="text-muted text-decoration-none">Konsultasi Online</a></li>
+          <li><a href="{% url 'appointments:appointment_list' %}" class="text-muted text-decoration-none">Buat Janji</a></li>
+          <li><a href="{% url 'pharmacy:medicine_list' %}" class="text-muted text-decoration-none">Pesan Obat</a></li>
+          <li><a href="{% url 'articles:list' %}" class="text-muted text-decoration-none">Artikel Kesehatan</a></li>
         </ul>
       </div>
 
@@ -423,21 +520,177 @@
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <style>
+    /* Modern Article Card Styles */
+    .article-card-modern {
+      transition: all 0.3s ease;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    .article-card-modern:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15) !important;
+    }
+    .article-card-modern:hover .article-image-wrapper img {
+      transform: scale(1.1);
+    }
+    .article-image-wrapper {
+      border-radius: 15px 15px 0 0;
+      overflow: hidden;
+    }
+
+    /* Enhanced Service Cards */
+    .service-card {
+      transition: all 0.3s ease;
+      border-radius: 15px;
+      border: 1px solid #e9ecef;
+    }
+    .service-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-color: #28a745;
+    }
+
+    /* Smooth Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .section {
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    /* Enhanced Hero */
+    .hero {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Interactive Stats */
+    .stat {
+      transition: all 0.3s ease;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .stat:hover {
+      background: rgba(40, 167, 69, 0.1);
+      transform: scale(1.05);
+    }
+
+    /* Modern Buttons */
+    .btn-cta {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      border: none;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+    }
+    .btn-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+    }
+    .btn-outline-cta {
+      border: 2px solid #28a745;
+      color: #28a745;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+    }
+    .btn-outline-cta:hover {
+      background: #28a745;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .hero {
+        min-height: 70vh;
+        background-attachment: scroll;
+      }
+      .hero-stats {
+        flex-direction: column;
+        gap: 1rem !important;
+      }
+    }
+  </style>
+
   <script>
     // Navbar shrink on scroll
-    const nav = document.getElementById('mainNav');
     window.addEventListener('scroll', () => {
-      if (window.scrollY > 40) nav.classList.add('nav-scrolled');
-      else nav.classList.remove('nav-scrolled');
+      const nav = document.querySelector('.navbar');
+      if (window.scrollY > 40) {
+        nav.classList.add('shadow-lg');
+        nav.style.padding = '0.5rem 0';
+      } else {
+        nav.classList.remove('shadow-lg');
+        nav.style.padding = '0.75rem 0';
+      }
     });
 
-    // Smooth scrolling for nav links
-    document.querySelectorAll('#navLinks a').forEach(a=>{
-      a.addEventListener('click', e=>{
-        e.preventDefault();
-        const target = document.querySelector(a.getAttribute('href'));
-        if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
-      })
+    // Smooth scrolling for nav links (hanya untuk anchor links, bukan URL)
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const href = this.getAttribute('href');
+        // Hanya prevent default jika href adalah anchor (#)
+        if (href && href.startsWith('#') && href.length > 1) {
+          e.preventDefault();
+          const target = document.querySelector(href);
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        }
+      });
+    });
+
+    // Animate on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.service-card, .article-card-modern, .testimonial').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'all 0.6s ease-out';
+      observer.observe(el);
     });
   </script>
 </body>

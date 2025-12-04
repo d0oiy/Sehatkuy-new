@@ -1,41 +1,242 @@
 {% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Dashboard Dokter{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4 text-primary">Dashboard Dokter</h2>
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Dashboard Dokter</h2>
+            <p class="text-muted mb-0">
+                Selamat datang, <strong>Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}</strong>
+                {% if doctor.poliklinik %}
+                    - {{ doctor.poliklinik.name }}
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'doctors:consultations' %}" class="btn btn-outline-primary">Lihat Semua Konsultasi</a>
+            <a href="{% url 'doctors:appointments' %}" class="btn btn-outline-success">Lihat Semua Janji Temu</a>
+            <a href="{% url 'doctors:poliklinik_manage' %}" class="btn btn-outline-warning">🏥 Kelola Poliklinik</a>
+            <a href="{% url 'doctors:slot_manage' %}" class="btn btn-outline-info">📅 Kelola Slot</a>
+            <a href="{% url 'doctors:queue_manage' %}" class="btn btn-outline-secondary">🎫 Kelola Antrian</a>
+        </div>
+    </div>
 
-    <div class="card shadow p-4">
-        <h4>Selamat datang, {{ user.full_name|default:user.username }} 👋</h4>
-        <p class="text-muted">Berikut ringkasan aktivitas Anda sebagai dokter:</p>
-
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="card text-center border-success mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title text-success">Total Konsultasi</h5>
-                        <h2>{{ total_consultations }}</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-center border-info mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title text-info">Pasien Aktif</h5>
-                        <h2>{{ total_patients }}</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-center border-primary mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">Konsultasi Hari Ini</h5>
-                        <h2>{{ today_consultations }}</h2>
+    <!-- Statistik Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Konsultasi</h6>
+                            <h3 class="mb-0">{{ total_consultations }}</h3>
+                        </div>
+                        <div class="text-primary" style="font-size: 2.5rem;">📋</div>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="card border-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Konsultasi Hari Ini</h6>
+                            <h3 class="mb-0">{{ today_consultations }}</h3>
+                        </div>
+                        <div class="text-info" style="font-size: 2.5rem;">📅</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Pasien Aktif</h6>
+                            <h3 class="mb-0">{{ active_patients }}</h3>
+                        </div>
+                        <div class="text-success" style="font-size: 2.5rem;">👥</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Janji Temu Hari Ini</h6>
+                            <h3 class="mb-0">{{ today_appointments_count }}</h3>
+                        </div>
+                        <div class="text-warning" style="font-size: 2.5rem;">⏰</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <div class="mt-4">
-            <a href="{% url 'doctor_consultations' %}" class="btn btn-primary">Lihat Daftar Konsultasi</a>
+    <div class="row g-3">
+        <!-- Janji Temu yang Perlu Ditinjau -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">⚠️ Janji Temu Perlu Ditinjau</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_appointments %}
+                        <div class="list-group list-group-flush">
+                            {% for appointment in pending_appointments %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ appointment.patient.get_full_name|default:appointment.patient.username }}</h6>
+                                            <small class="text-muted d-block">
+                                                📅 {{ appointment.date|date:"d M Y" }} 
+                                                ⏰ {{ appointment.time|time:"H:i" }}
+                                            </small>
+                                            {% if appointment.poliklinik %}
+                                                <small class="text-muted d-block">🏥 {{ appointment.poliklinik.name }}</small>
+                                            {% endif %}
+                                            <small class="text-muted d-block">📝 {{ appointment.reason|truncatewords:10 }}</small>
+                                        </div>
+                                        <a href="{% url 'doctors:appointment_detail' appointment.id %}" class="btn btn-sm btn-primary">
+                                            Tinjau
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-3">
+                            <a href="{% url 'doctors:appointments' %}?status=pending" class="btn btn-outline-warning btn-sm">
+                                Lihat Semua ({{ pending_appointments|length }})
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Tidak ada janji temu yang perlu ditinjau.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Nomor Antrian Hari Ini -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">🎫 Nomor Antrian Hari Ini</h5>
+                </div>
+                <div class="card-body">
+                    {% if today_appointments %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>No. Antrian</th>
+                                        <th>Pasien</th>
+                                        <th>Waktu</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for appointment in today_appointments %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary">#{{ appointment.queue_number }}</span>
+                                            </td>
+                                            <td>{{ appointment.patient.get_full_name|default:appointment.patient.username }}</td>
+                                            <td>{{ appointment.time|time:"H:i" }}</td>
+                                            <td>
+                                                {% if appointment.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {% elif appointment.status == 'approved' %}
+                                                    <span class="badge bg-success">Disetujui</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Dibatalkan</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{% url 'doctors:appointments' %}?status=today" class="btn btn-outline-info btn-sm">
+                                Lihat Detail
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Tidak ada janji temu hari ini.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Konsultasi Terbaru -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">💬 Konsultasi Terbaru</h5>
+                        <a href="{% url 'doctors:consultations' %}" class="btn btn-light btn-sm">
+                            Lihat Semua
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_consultations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Pasien</th>
+                                        <th>Poliklinik</th>
+                                        <th>Keluhan</th>
+                                        <th>Status</th>
+                                        <th>Terakhir</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for consultation in recent_consultations %}
+                                        <tr>
+                                            <td>{{ consultation.patient.get_full_name|default:consultation.patient.username }}</td>
+                                            <td>
+                                                {% if consultation.doctor and consultation.doctor.poliklinik %}
+                                                    {{ consultation.doctor.poliklinik.name }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ consultation.complaint|truncatewords:10|default:"-" }}</td>
+                                            <td>
+                                                {% if consultation.status == 'Menunggu' %}
+                                                    <span class="badge bg-warning">Menunggu</span>
+                                                {% elif consultation.status == 'Berlangsung' %}
+                                                    <span class="badge bg-info">Berlangsung</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">Selesai</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ consultation.created_at|date:"d M Y, H:i" }}</td>
+                                            <td>
+                                                <a href="{% url 'doctors:consultation_detail' consultation.id %}" class="btn btn-sm btn-primary">
+                                                    Buka Chat
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Belum ada konsultasi.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
