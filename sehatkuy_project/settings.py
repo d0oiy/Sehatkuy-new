@@ -6,6 +6,9 @@ Django settings for sehatkuy_project project.
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
+load_dotenv()
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -93,8 +96,7 @@ WSGI_APPLICATION = 'sehatkuy_project.wsgi.application'
 DATABASES = {
     "default": dj_database_url.parse(
         os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
+        conn_max_age=600
     )
 }
 
