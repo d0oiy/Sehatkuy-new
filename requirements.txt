@@ -1,12 +1,10 @@
-# requirements.txt untuk proyek Django "sehatkuy"
-
+asgiref==3.8.1
 Django==5.2.7
+django-cors-headers==4.9.0
 djangorestframework==3.14.0
 mysqlclient==2.2.4
-asgiref==3.8.1
+pillow==12.0.0
+python-dotenv==1.0.1
+pytz==2025.2
 sqlparse==0.5.1
 tzdata==2025.1
-requests==2.31.0
-
-# (opsional) hanya jika kamu pakai Python-dotenv untuk variabel lingkungan
-python-dotenv==1.0.1
