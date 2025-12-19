@@ -18,11 +18,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://*railway.app",
-]
-
-
 
 # ==============================
 # APPLICATIONS
@@ -158,6 +153,7 @@ CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://sehatkuy-new-production.up.railway.app",
     "http://127.0.0.1:8000",
     "http://localhost:8000"
 ]
