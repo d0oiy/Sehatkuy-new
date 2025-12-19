@@ -51,8 +51,11 @@ def register_view(request):
 def login_view(request):
     # 🔹 Kalau user sudah login, langsung arahkan ke dashboard sesuai role
     if request.user.is_authenticated:
-        if request.user.is_superuser or request.user.role == 'admin':
+        if request.user.is_superuser or request.user.role in ('admin', 'admin_sistem'):
             return redirect('admin_dashboard')
+        elif request.user.role == 'admin_poliklinik':
+            # Admin Poliklinik gets their own dashboard
+            return redirect('adminpanel:poliklinik_dashboard')
         elif request.user.role == 'dokter':
             return redirect('doctors:doctor_dashboard')
         elif request.user.role == 'pasien':
@@ -82,8 +85,10 @@ def login_view(request):
             login(request, user)
 
             # 🔹 Redirect sesuai role user
-            if user.is_superuser or user.role == 'admin':
+            if user.is_superuser or user.role in ('admin', 'admin_sistem'):
                 return redirect('admin_dashboard')
+            elif user.role == 'admin_poliklinik':
+                return redirect('adminpanel:poliklinik_dashboard')
             elif user.role == 'dokter':
                 return redirect('doctor_dashboard')
             elif user.role == 'pasien':
@@ -163,7 +168,7 @@ def doctor_dashboard(request):
 # 🧑‍💼 DASHBOARD ADMIN
 @login_required
 def admin_dashboard(request):
-    if request.user.role != 'admin' and not request.user.is_superuser:
+    if request.user.role not in ('admin', 'admin_sistem', 'admin_poliklinik') and not request.user.is_superuser:
         messages.error(request, 'Akses ditolak.')
         return redirect('login')
 

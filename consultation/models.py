@@ -28,6 +28,17 @@ class Consultation(models.Model):
     doctor_name = models.CharField(max_length=100, blank=True)
     date = models.DateField(default=timezone.now, blank=True, null=True)
     complaint = models.TextField(blank=True)
+
+    # Payment fields
+    from decimal import Decimal
+    from django.core.validators import MinValueValidator
+
+    fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('50000.00'), validators=[MinValueValidator(Decimal('0.00'))])
+    payment_status = models.CharField(max_length=20, choices=[('unpaid','Belum Bayar'), ('pending','Menunggu Konfirmasi'), ('paid','Lunas'), ('failed','Gagal')], default='unpaid')
+    payment_proof = models.FileField(upload_to='payments/consultation/', null=True, blank=True)
+    payment_transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_WAITING)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 

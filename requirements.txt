@@ -6,6 +6,7 @@ mysqlclient==2.2.4
 asgiref==3.8.1
 sqlparse==0.5.1
 tzdata==2025.1
+requests==2.31.0
 
 # (opsional) hanya jika kamu pakai Python-dotenv untuk variabel lingkungan
 python-dotenv==1.0.1

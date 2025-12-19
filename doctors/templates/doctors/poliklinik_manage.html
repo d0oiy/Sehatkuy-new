@@ -29,20 +29,18 @@
 
                     <p class="text-muted">{{ poliklinik.description }}</p>
 
+                    {% if can_manage %}
                     <form method="post" class="mt-4">
                         {% csrf_token %}
                         <div class="d-grid gap-2">
-                            <button type="submit" name="action" value="open" class="btn btn-success btn-lg">
-                                🔓 Buka Poliklinik
-                            </button>
-                            <button type="submit" name="action" value="close" class="btn btn-danger btn-lg">
-                                🔒 Tutup Poliklinik
-                            </button>
-                            <button type="submit" name="action" value="auto" class="btn btn-info btn-lg">
-                                ⏰ Ikuti Jadwal Otomatis
-                            </button>
+                            <button type="submit" name="action" value="open" class="btn btn-success btn-lg">🔓 Buka Poliklinik</button>
+                            <button type="submit" name="action" value="close" class="btn btn-danger btn-lg">🔒 Tutup Poliklinik</button>
+                            <button type="submit" name="action" value="auto" class="btn btn-info btn-lg">⏰ Ikuti Jadwal Otomatis</button>
                         </div>
                     </form>
+                    {% else %}
+                        <div class="alert alert-info">Pengelolaan poliklinik dilakukan oleh <strong>Admin Poliklinik</strong>. Silakan hubungi admin atau pergi ke <a href="{% url 'adminpanel:poliklinik_dashboard' %}">Dashboard Poliklinik</a> jika Anda memiliki akses.</div>
+                    {% endif %}
                 </div>
             </div>
         </div>

@@ -256,7 +256,7 @@ def consultation_mark_done(request, consultation_id):
 
 @login_required
 def poliklinik_manage(request):
-    """Kelola status buka/tutup poliklinik"""
+    """Tampilan read-only untuk dokters: informasikan bahwa pengelolaan dilakukan oleh Admin Poliklinik"""
     if not _require_doctor_access(request):
         return redirect("home")
     
@@ -267,30 +267,17 @@ def poliklinik_manage(request):
         return redirect('doctors:doctor_dashboard')
     
     poliklinik = doctor.poliklinik
-    
+
+    # Dokter tidak boleh mengubah status poliklinik; hanya melihat status
     if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'open':
-            poliklinik.force_open = True
-            poliklinik.force_close = False
-            poliklinik.save(update_fields=['force_open', 'force_close'])
-            messages.success(request, f"Poliklinik {poliklinik.name} telah dibuka.")
-        elif action == 'close':
-            poliklinik.force_open = False
-            poliklinik.force_close = True
-            poliklinik.save(update_fields=['force_open', 'force_close'])
-            messages.success(request, f"Poliklinik {poliklinik.name} telah ditutup.")
-        elif action == 'auto':
-            poliklinik.force_open = False
-            poliklinik.force_close = False
-            poliklinik.save(update_fields=['force_open', 'force_close'])
-            messages.success(request, f"Poliklinik {poliklinik.name} mengikuti jadwal otomatis.")
+        messages.error(request, "Pengelolaan poliklinik dilakukan oleh Admin Poliklinik. Hubungi admin untuk melakukan perubahan.")
         return redirect('doctors:poliklinik_manage')
-    
+
     context = {
         'doctor': doctor,
         'poliklinik': poliklinik,
         'is_open': poliklinik.is_currently_open(),
+        'can_manage': False,
     }
     return render(request, 'doctors/poliklinik_manage.html', context)
 
@@ -314,41 +301,8 @@ def slot_manage(request):
     ).order_by('date', 'start_time')
     
     if request.method == 'POST':
-        action = request.POST.get('action')
-        slot_id = request.POST.get('slot_id')
-        
-        if action == 'create':
-            slot_date = request.POST.get('date')
-            start_time = request.POST.get('start_time')
-            end_time = request.POST.get('end_time')
-            quota = int(request.POST.get('quota', 10))
-            
-            AppointmentSlot.objects.create(
-                doctor=doctor,
-                poliklinik=doctor.poliklinik,
-                date=slot_date,
-                start_time=start_time,
-                end_time=end_time,
-                quota=quota
-            )
-            messages.success(request, "Slot janji temu berhasil ditambahkan.")
-        elif action == 'delete' and slot_id:
-            slot = get_object_or_404(AppointmentSlot, id=slot_id, doctor=doctor)
-            if slot.appointments.exists():
-                messages.error(request, "Slot tidak dapat dihapus karena sudah ada janji temu.")
-            else:
-                slot.delete()
-                messages.success(request, "Slot berhasil dihapus.")
-        elif action == 'update_quota' and slot_id:
-            slot = get_object_or_404(AppointmentSlot, id=slot_id, doctor=doctor)
-            new_quota = int(request.POST.get('quota', slot.quota))
-            if new_quota < slot.used_quota():
-                messages.error(request, "Quota tidak boleh kurang dari jumlah janji yang sudah ada.")
-            else:
-                slot.quota = new_quota
-                slot.save()
-                messages.success(request, "Quota slot berhasil diupdate.")
-        
+        # Pengaturan slot dikontrol oleh Admin Poliklinik; dokter tidak dapat menambah/menghapus/mengubah quota.
+        messages.error(request, "Perubahan slot tidak diperbolehkan. Slot dikelola oleh Admin Poliklinik dan setiap hari secara default memiliki 10 slot per hari.")
         return redirect('doctors:slot_manage')
     
     context = {
@@ -384,33 +338,8 @@ def queue_manage(request):
     ).first()
     
     if request.method == 'POST':
-        action = request.POST.get('action')
-        queue_id = request.POST.get('queue_id')
-        
-        if action == 'next' and queue_id:
-            # Pindahkan antrian saat ini ke completed
-            if current_queue:
-                current_queue.status = Queue.STATUS_COMPLETED
-                current_queue.completed_at = timezone.now()
-                current_queue.save()
-            
-            # Pindahkan antrian berikutnya ke in_progress
-            next_queue = get_object_or_404(Queue, id=queue_id, doctor=doctor)
-            next_queue.status = Queue.STATUS_IN_PROGRESS
-            next_queue.started_at = timezone.now()
-            next_queue.save()
-            messages.success(request, f"Antrian #{next_queue.queue_number} sekarang sedang dilayani.")
-        
-        elif action == 'confirm_checkin' and queue_id:
-            queue = get_object_or_404(Queue, id=queue_id, doctor=doctor)
-            if queue.status == Queue.STATUS_WAITING:
-                queue.status = Queue.STATUS_CHECKED_IN
-                queue.checked_in_at = timezone.now()
-                queue.save()
-                messages.success(request, f"Check in pasien antrian #{queue.queue_number} dikonfirmasi.")
-            else:
-                messages.error(request, "Pasien sudah check in sebelumnya.")
-        
+        # Dokter tidak memiliki hak untuk memodifikasi antrian; gunakan Admin Poliklinik
+        messages.error(request, "Pengelolaan antrian dilakukan oleh Admin Poliklinik. Hubungi admin untuk tindakan ini.")
         return redirect('doctors:queue_manage')
     
     context = {

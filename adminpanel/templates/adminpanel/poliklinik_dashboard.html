@@ -1,0 +1,53 @@
+{% extends 'adminpanel/base.html' %}
+{% block title %}Dashboard Admin Poliklinik{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>🏥 Dashboard Admin Poliklinik</h2>
+    <p class="text-muted">Ringkasan tugas: verifikasi pembayaran pesanan, kelola data dokter, lihat konsultasi.</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">Dokter</div>
+                <div class="card-body">
+                    <ul>
+                        {% for d in doctors %}
+                            <li>{{ d.user.get_full_name|default:d.user.username }} &mdash; {{ d.specialization }}</li>
+                        {% empty %}
+                            <li class="text-muted">Belum ada dokter terdaftar.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header bg-warning text-dark">Pembayaran Menunggu Verifikasi</div>
+                <div class="card-body">
+                    <ul>
+                        {% for o in pending_payments %}
+                            <li>{{ o.order_number }} — {{ o.patient.get_full_name|default:o.patient.username }} — {{ o.total_price }}</li>
+                        {% empty %}
+                            <li class="text-muted">Tidak ada pembayaran menunggu.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-info text-white">Konsultasi Terbaru</div>
+                <div class="card-body">
+                    <ul>
+                        {% for c in recent_consultations %}
+                            <li>{{ c.patient.get_full_name|default:c.patient.username }} — {{ c.date }}</li>
+                        {% empty %}
+                            <li class="text-muted">Tidak ada konsultasi baru.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

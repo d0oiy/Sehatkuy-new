@@ -1,0 +1,63 @@
+{% extends 'adminpanel/base.html' %}
+{% block title %}Kelola Antrian - {{ poliklinik.name }}{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🎫 Kelola Antrian - {{ poliklinik.name }}</h2>
+        <a href="{% url 'adminpanel:poliklinik_manage' poliklinik.id %}" class="btn btn-outline-secondary">Kembali</a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Daftar Antrian Hari Ini</h5>
+        </div>
+        <div class="card-body">
+            {% if queues %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Pasien</th>
+                                <th>Dokter</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for q in queues %}
+                                <tr>
+                                    <td>#{{ q.queue_number }}</td>
+                                    <td>{{ q.patient.get_full_name|default:q.patient.username }}</td>
+                                    <td>{{ q.doctor.user.get_full_name|default:q.doctor.user.username }}</td>
+                                    <td>{{ q.get_status_display }}</td>
+                                    <td>
+                                        <form method="post" class="d-inline">{% csrf_token %}
+                                            <input type="hidden" name="queue_id" value="{{ q.id }}">
+                                            <button type="submit" name="action" value="confirm_checkin" class="btn btn-sm btn-success">Check-in</button>
+                                            <button type="submit" name="action" value="next" class="btn btn-sm btn-primary">Pindah ke Lanjut</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">Tidak ada antrian hari ini.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if current_queue %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Antrian yang Sedang Dilayani</h5>
+        </div>
+        <div class="card-body">
+            <p>Nomor: #{{ current_queue.queue_number }} - Pasien: {{ current_queue.patient.get_full_name|default:current_queue.patient.username }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

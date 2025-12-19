@@ -71,13 +71,12 @@ def consultation_create(request):
         if form.is_valid():
             consultation = form.save(commit=False)
             consultation.patient = request.user
+            # Semua konsultasi membutuhkan proses pembayaran terlebih dahulu
             consultation.status = Consultation.STATUS_WAITING
-            if consultation.doctor:
-                consultation.status = Consultation.STATUS_ACTIVE
             consultation.save()
             messages.success(
                 request,
-                "Konsultasi berhasil dikirim! Dokter akan meninjau dan merespons melalui chatbot.",
+                "Konsultasi berhasil dikirim! Silakan lakukan pembayaran agar konsultasi dapat dilanjutkan.",
             )
             return redirect("consultation:consultation_list")
     else:
@@ -123,13 +122,17 @@ def consultation_chat(request, doctor_id):
             ConsultationMessage.objects.create(
                 consultation=consultation, sender="patient", message=user_message
             )
-            bot_reply = generate_chatbot_reply(user_message, doctor)
+            bot_reply = generate_chatbot_reply(user_message, doctor, consultation=consultation)
             ConsultationMessage.objects.create(
                 consultation=consultation, sender="bot", message=bot_reply
             )
             if not consultation.complaint:
                 consultation.complaint = user_message
-            consultation.status = Consultation.STATUS_ACTIVE
+            # Hanya aktif jika sudah dibayar
+            if getattr(consultation, 'payment_status', None) == 'paid':
+                consultation.status = Consultation.STATUS_ACTIVE
+            else:
+                consultation.status = Consultation.STATUS_WAITING
             consultation.save(update_fields=["complaint", "status"])
             return redirect("consultation:consultation_chat", doctor_id=doctor.id)
     else:
@@ -150,3 +153,34 @@ def medical_record_list(request):
         return redirect("home")
     records = MedicalRecord.objects.filter(patient=request.user).order_by("-created_at")
     return render(request, "medical_record/list.html", {"records": records})
+
+
+@login_required
+def consultation_pay(request, consultation_id):
+    """Simple payment simulation for consultation fees. Replace with gateway integration later."""
+    consultation = get_object_or_404(Consultation, pk=consultation_id, patient=request.user)
+
+    if request.method == 'POST':
+        # Simulate payment success
+        from django.utils import timezone
+        consultation.payment_status = 'paid'
+        consultation.payment_transaction_id = f"CONS-{consultation.id}-{int(timezone.now().timestamp())}"
+        consultation.paid_at = timezone.now()
+        consultation.save(update_fields=['payment_status','payment_transaction_id','paid_at'])
+
+        ConsultationMessage.objects.create(
+            consultation=consultation,
+            sender='bot',
+            message='Pembayaran berhasil diterima. Konsultasi akan dilanjutkan oleh dokter.'
+        )
+
+        # Set status to active now that payment is cleared
+        consultation.status = Consultation.STATUS_ACTIVE
+        consultation.save(update_fields=['status'])
+        messages.success(request, 'Pembayaran berhasil. Terima kasih.')
+        return redirect('consultation:consultation_chat', doctor_id=consultation.doctor.id if consultation.doctor else 0)
+
+    context = {
+        'consultation': consultation,
+    }
+    return render(request, 'consultation/pay.html', context)

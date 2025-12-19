@@ -45,7 +45,7 @@
                                     Dokter
                                 {% endif %}
                             </small>
-                            <div>{{ msg.message|linebreaks }}</div>
+                            <div>{{ msg.message|urlize|linebreaks }}</div>
                             <small class="d-block text-end mt-1 {% if msg.sender == 'patient' %}text-white-50{% else %}text-muted{% endif %}">
                                 {{ msg.created_at|date:"d M Y, H:i" }}
                             </small>

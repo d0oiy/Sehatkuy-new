@@ -266,6 +266,42 @@
             </div>
             {% endif %}
 
+            <!-- Payment Info -->
+            <div class="card shadow mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Informasi Pembayaran</h5>
+                </div>
+                <div class="card-body">
+                    <p>Status Pembayaran: <strong>{{ order.get_payment_status_display }}</strong></p>
+                    {% if order.payment_transaction_id %}
+                        <p><strong>Transaction ID:</strong> <code>{{ order.payment_transaction_id }}</code></p>
+                    {% endif %}
+                    {% if order.payment_url %}
+                        <p><strong>Tautan Pembayaran:</strong><br>
+                        <a href="{{ order.payment_url }}" target="_blank">{{ order.payment_url }}</a></p>
+                    {% endif %}
+
+                    {% if order.payment_proof %}
+                        <p><strong>Bukti Pembayaran:</strong></p>
+                        <p><a href="{{ order.payment_proof.url }}" target="_blank">Lihat Bukti Pembayaran</a></p>
+                    {% else %}
+                        <p class="text-muted">Belum ada bukti pembayaran diunggah.</p>
+                    {% endif %}
+
+                    {% if order.payment_qr_url %}
+                        <p><strong>QRIS Pembayaran:</strong></p>
+                        <p><a href="{{ order.payment_qr_url }}" target="_blank">Buka QRIS / Tautan</a></p>
+                    {% endif %}
+
+                    {% if order.payment_status != 'paid' %}
+                        <form method="post" action="{% url 'pharmacy:admin_verify_payment' order.pk %}">{% csrf_token %}
+                            <button name="action" value="verify" class="btn btn-success btn-block mb-2">Verifikasi Pembayaran</button>
+                            <button name="action" value="reject" class="btn btn-danger btn-block">Tolak Pembayaran</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
             <!-- Actions -->
             <div class="card shadow">
                 <div class="card-header bg-secondary text-white">

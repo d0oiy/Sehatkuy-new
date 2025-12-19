@@ -6,6 +6,14 @@ from django.http import JsonResponse
 from django.db.models import Q
 from datetime import datetime, timedelta
 import json
+import requests
+import logging
+import hmac
+import hashlib
+import time
+from django.db.utils import OperationalError
+
+logger = logging.getLogger(__name__)
 
 from .models import Medicine, MedicineOrder, OrderItem, Delivery
 from .forms import (
@@ -122,12 +130,17 @@ def medicine_delete(request, pk):
 @login_required
 def order_list(request):
     """Tampilkan list pesanan obat"""
-    if request.user.is_staff or request.user.is_superuser:
-        # Admin & dokter melihat semua pesanan
-        orders = MedicineOrder.objects.all()
-    else:
-        # Pasien hanya melihat pesanan mereka
-        orders = MedicineOrder.objects.filter(patient=request.user)
+    try:
+        user_role = getattr(request.user, 'role', None)
+        if request.user.is_staff or request.user.is_superuser or user_role in ('admin', 'admin_sistem', 'admin_poliklinik'):
+            # Admin & dokter melihat semua pesanan
+            orders = MedicineOrder.objects.all()
+        else:
+            # Pasien hanya melihat pesanan mereka
+            orders = MedicineOrder.objects.filter(patient=request.user)
+    except OperationalError:
+        messages.error(request, 'Database schema mismatch: please run migrations (python manage.py migrate).')
+        orders = MedicineOrder.objects.none()
     
     status_filter = request.GET.get('status', '')
     if status_filter:
@@ -144,7 +157,11 @@ def order_list(request):
 @login_required
 def order_detail(request, pk):
     """Tampilkan detail pesanan"""
-    order = get_object_or_404(MedicineOrder, pk=pk)
+    try:
+        order = get_object_or_404(MedicineOrder, pk=pk)
+    except OperationalError:
+        messages.error(request, 'Database schema mismatch: please run migrations (python manage.py migrate).')
+        return redirect('pharmacy:order_list')
     
     # Check permission
     if not request.user.is_staff and order.patient != request.user:
@@ -191,7 +208,11 @@ def order_create(request):
 @login_required
 def order_items(request, order_id):
     """Kelola item dalam pesanan"""
-    order = get_object_or_404(MedicineOrder, pk=order_id)
+    try:
+        order = get_object_or_404(MedicineOrder, pk=order_id)
+    except OperationalError:
+        messages.error(request, 'Database schema mismatch: please run migrations (python manage.py migrate).')
+        return redirect('pharmacy:order_list')
     
     # Check permission
     if not request.user.is_staff and order.patient != request.user:
@@ -259,24 +280,263 @@ def order_confirm(request, pk):
         if order.items.count() == 0:
             messages.error(request, 'Pesanan tidak boleh kosong.')
         else:
-            order.status = 'confirmed'
+            # Tandai bahwa pembayaran diperlukan - arahkan ke halaman pembayaran
+            order.payment_status = 'pending'
             order.save()
-            
-            # Buat delivery record
-            Delivery.objects.create(
-                order=order,
-                pickup_latitude='-6.2088',  # Default Jakarta
-                pickup_longitude='106.8456',
-                delivery_latitude='-6.2088',
-                delivery_longitude='106.8456',
-                estimated_arrival=datetime.now() + timedelta(hours=2)
-            )
-            
-            messages.success(request, 'Pesanan dikonfirmasi. Menunggu verifikasi admin.')
-            return redirect('pharmacy:order_detail', pk=pk)
+            messages.success(request, 'Pesanan dibuat. Silakan lakukan pembayaran agar pesanan dapat diproses oleh admin poliklinik.')
+            return redirect('pharmacy:order_payment', pk=pk)
     
     context = {'order': order}
     return render(request, 'pharmacy/order_confirm.html', context)
+
+
+@login_required
+def order_payment(request, pk):
+    """Payment page: show VA / payment link and a 'Pay Now' action which triggers Ipaymu creation.
+
+    Also supports a POST (demo flow) to directly mark an order as paid for testing and manual confirmation.
+    """
+    from django.conf import settings
+    try:
+        order = get_object_or_404(MedicineOrder, pk=pk, patient=request.user)
+    except OperationalError:
+        messages.error(request, 'Database schema mismatch: please run migrations (python manage.py migrate).')
+        return redirect('pharmacy:order_list')
+
+    if request.method == 'POST':
+        # Demo: mark order as paid (used by legacy tests and manual demo flow)
+        from django.utils import timezone
+        order.payment_status = 'paid'
+        order.payment_transaction_id = f"ORDPAY-{order.id}-{int(timezone.now().timestamp())}"
+        order.paid_at = timezone.now()
+        order.save(update_fields=['payment_status','payment_transaction_id','paid_at'])
+        messages.success(request, 'Pembayaran berhasil. Menunggu verifikasi oleh Admin Poliklinik.')
+        return redirect('pharmacy:order_detail', pk=pk)
+
+    context = {
+        'order': order,
+        'ipaymu_va': getattr(settings, 'IPAYMU_VA', None),
+        'payment_url': order.payment_url,
+        'payment_status': order.payment_status,
+        'payment_qr_url': order.payment_qr_url,
+    }
+    return render(request, 'pharmacy/order_payment.html', context)
+
+
+@login_required
+def create_ipaymu_payment(request, pk):
+    """Create a payment request in Ipaymu sandbox and redirect user to the payment link or show VA details.
+
+    Implementation is tolerant to the exact JSON keys returned by the provider (we try multiple keys).
+    The real integration may require signing headers; these can be added later if needed.
+    """
+    from django.conf import settings
+    from django.urls import reverse
+
+    order = get_object_or_404(MedicineOrder, pk=pk, patient=request.user)
+
+    if request.method != 'POST':
+        return redirect('pharmacy:order_payment', pk=pk)
+
+    if order.items.count() == 0:
+        messages.error(request, 'Pesanan tidak boleh kosong.')
+        return redirect('pharmacy:order_items', order_id=order.pk)
+
+    # Prepare payload - adapt to provider if needed
+    payload = {
+        'product': f'Pembayaran {order.order_number}',
+        'price': int(order.total_price),
+        'quantity': 1,
+        'buyerName': f'{order.patient.get_full_name() or order.patient.username}',
+        'buyerEmail': order.patient.email or '',
+        'buyerPhone': order.delivery_phone or '',
+        'returnUrl': request.build_absolute_uri(reverse('pharmacy:order_detail', args=[order.pk])),
+        'notifyUrl': request.build_absolute_uri(reverse('pharmacy:admin_verify_payment', args=[order.pk])),
+        'expired': 60,  # minutes until payment expiration (example)
+        'virtualAccount': getattr(settings, 'IPAYMU_VA', None),
+    }
+
+    # Compute HMAC-SHA256 signature over the canonical JSON payload
+    secret = getattr(settings, 'IPAYMU_API_SECRET', getattr(settings, 'IPAYMU_API_KEY', ''))
+    payload_bytes = json.dumps(payload, separators=(',', ':'), sort_keys=True).encode('utf-8')
+    signature = hmac.new(secret.encode('utf-8'), payload_bytes, hashlib.sha256).hexdigest()
+    ts = str(int(time.time()))
+
+    headers = {
+        'Content-Type': 'application/json',
+        'X-API-KEY': getattr(settings, 'IPAYMU_API_KEY', ''),
+        'va': getattr(settings, 'IPAYMU_VA', ''),
+        'signature': signature,
+        'Signature': signature,
+        'X-Signature': signature,
+        'timestamp': ts,
+        'ts': ts,
+    }
+
+    try:
+        resp = requests.post(getattr(settings, 'IPAYMU_API_URL', ''), json=payload, headers=headers, timeout=15)
+        data = resp.json() if resp.content else {}
+
+        if resp.status_code in (200, 201):
+            # Try to extract common fields
+            trans_id = data.get('ReferenceId') or data.get('InvoiceNo') or data.get('TransactionId') or data.get('ref') or data.get('reference')
+            payment_url = data.get('Url') or data.get('paymentUrl') or data.get('virtualAccountUrl') or data.get('payment_link') or data.get('url')
+
+            order.payment_status = 'pending'
+            if trans_id:
+                order.payment_transaction_id = str(trans_id)
+            if payment_url:
+                order.payment_url = payment_url
+            order.save(update_fields=['payment_status','payment_transaction_id','payment_url'])
+
+            messages.success(request, 'Permintaan pembayaran berhasil dibuat. Lanjutkan pembayaran pada halaman berikut.')
+            if payment_url:
+                return redirect(payment_url)
+            return redirect('pharmacy:order_payment', pk=pk)
+        else:
+            messages.error(request, f'Gagal membuat pembayaran: {data.get("message", resp.text)}')
+            return redirect('pharmacy:order_payment', pk=pk)
+
+    except Exception as e:
+        messages.error(request, f'Gagal terhubung ke penyedia pembayaran: {e}')
+        return redirect('pharmacy:order_payment', pk=pk)
+
+
+@login_required
+def create_ipaymu_qris(request, pk):
+    """Create a QRIS payment via Ipaymu sandbox and return QR/URL for customer to scan/pay."""
+    from django.conf import settings
+    from django.urls import reverse
+
+    order = get_object_or_404(MedicineOrder, pk=pk, patient=request.user)
+
+    if request.method != 'POST':
+        return redirect('pharmacy:order_payment', pk=pk)
+
+    if order.items.count() == 0:
+        messages.error(request, 'Pesanan tidak boleh kosong.')
+        return redirect('pharmacy:order_items', order_id=order.pk)
+
+    # Idempotency: if a payment link/QR already exists, don't create again — redirect to payment page
+    if order.payment_qr_url or order.payment_url:
+        messages.info(request, 'Permintaan pembayaran sudah dibuat. Silakan lanjutkan pada halaman pembayaran.')
+        return redirect('pharmacy:order_payment', pk=pk)
+
+    payload = {
+        'product': f'Pembayaran {order.order_number}',
+        'price': int(order.total_price),
+        'quantity': 1,
+        'buyerName': f'{order.patient.get_full_name() or order.patient.username}',
+        'buyerEmail': order.patient.email or '',
+        'buyerPhone': order.delivery_phone or '',
+        'returnUrl': request.build_absolute_uri(reverse('pharmacy:order_detail', args=[order.pk])),
+        'notifyUrl': request.build_absolute_uri(reverse('pharmacy:admin_verify_payment', args=[order.pk])),
+        'expired': 60,
+        # hint to provider we want QRIS
+        'paymentMethod': 'qris',
+    }
+
+    # Compute HMAC-SHA256 signature over the canonical JSON payload
+    secret = getattr(settings, 'IPAYMU_API_SECRET', getattr(settings, 'IPAYMU_API_KEY', ''))
+    payload_bytes = json.dumps(payload, separators=(',', ':'), sort_keys=True).encode('utf-8')
+    signature = hmac.new(secret.encode('utf-8'), payload_bytes, hashlib.sha256).hexdigest()
+    ts = str(int(time.time()))
+
+    headers = {
+        'Content-Type': 'application/json',
+        'X-API-KEY': getattr(settings, 'IPAYMU_API_KEY', ''),
+        'va': getattr(settings, 'IPAYMU_VA', ''),
+        'signature': signature,
+        'Signature': signature,
+        'X-Signature': signature,
+        'timestamp': ts,
+        'ts': ts,
+    }
+
+    try:
+        # Mark as pending to reduce chance of concurrent duplicate calls
+        order.payment_status = 'pending'
+        order.save(update_fields=['payment_status'])
+
+        resp = requests.post(getattr(settings, 'IPAYMU_API_URL', ''), json=payload, headers=headers, timeout=15)
+        data = resp.json() if resp.content else {}
+
+        if resp.status_code in (200, 201):
+            trans_id = data.get('ReferenceId') or data.get('InvoiceNo') or data.get('TransactionId') or data.get('ref') or data.get('reference')
+            # Try QR-related keys
+            qris_url = data.get('QrisUrl') or data.get('qrisUrl') or data.get('qris_url') or data.get('qr_url') or data.get('qris')
+            payment_url = data.get('Url') or data.get('paymentUrl') or data.get('url')
+
+            if trans_id:
+                order.payment_transaction_id = str(trans_id)
+            if qris_url:
+                order.payment_qr_url = qris_url
+            if payment_url:
+                order.payment_url = payment_url
+            order.save(update_fields=['payment_transaction_id','payment_url','payment_qr_url'])
+
+            messages.success(request, 'Permintaan pembayaran (QRIS) berhasil dibuat. Silakan scan QRIS di halaman pembayaran.')
+            return redirect('pharmacy:order_payment', pk=pk)
+        else:
+            logger.warning('Ipaymu QRIS create failed: %s %s', resp.status_code, resp.text)
+            messages.error(request, f'Gagal membuat pembayaran: {data.get("message", resp.text)}')
+            # revert pending if provider failed
+            order.payment_status = 'unpaid'
+            order.save(update_fields=['payment_status'])
+            return redirect('pharmacy:order_payment', pk=pk)
+
+    except requests.RequestException as e:
+        logger.exception('Error while creating QRIS payment for order %s: %s', order.pk, e)
+        messages.error(request, 'Gagal terhubung ke penyedia pembayaran. Silakan coba lagi nanti.')
+        # revert pending flag
+        order.payment_status = 'unpaid'
+        order.save(update_fields=['payment_status'])
+        return redirect('pharmacy:order_payment', pk=pk)
+    except Exception as e:
+        logger.exception('Unexpected error during QRIS creation for order %s: %s', order.pk, e)
+        messages.error(request, 'Kesalahan terjadi saat membuat permintaan pembayaran. Silakan coba lagi.')
+        order.payment_status = 'unpaid'
+        order.save(update_fields=['payment_status'])
+        return redirect('pharmacy:order_payment', pk=pk) 
+
+
+@login_required
+def order_cancel(request, pk):
+    order = get_object_or_404(MedicineOrder, pk=pk, patient=request.user)
+    if request.method == 'POST':
+        if order.status in ('delivered','received','shipped'):
+            messages.error(request, 'Pesanan tidak dapat dibatalkan pada tahap ini.')
+        else:
+            order.status = 'cancelled'
+            order.save()
+            messages.success(request, 'Pesanan telah dibatalkan.')
+        return redirect('pharmacy:order_detail', pk=pk)
+    return redirect('pharmacy:order_detail', pk=pk)
+
+
+@login_required
+def admin_verify_payment(request, pk):
+    """Admin Poliklinik verifies payment proof and changes order status to confirmed."""
+    order = get_object_or_404(MedicineOrder, pk=pk)
+    user_role = getattr(request.user, 'role', None)
+    if not (request.user.is_superuser or user_role in ('admin', 'admin_sistem', 'admin_poliklinik')):
+        messages.error(request, 'Anda tidak memiliki akses.')
+        return redirect('pharmacy:order_list')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'verify':
+            order.payment_status = 'paid'
+            order.status = 'confirmed'
+            order.save()
+            messages.success(request, 'Pembayaran diverifikasi. Pesanan dikonfirmasi.')
+        elif action == 'reject':
+            order.payment_status = 'failed'
+            order.save()
+            messages.error(request, 'Pembayaran ditolak.')
+        return redirect('pharmacy:admin_order_detail', pk=pk)
+
+    return render(request, 'pharmacy/admin_order_detail.html', {'order': order})
 
 
 # ==================== DELIVERY & MAP VIEWS ====================
@@ -394,10 +654,10 @@ def order_confirm_receipt(request, pk):
 @login_required
 def patient_orders(request, patient_id=None):
     """View untuk admin/dokter melihat pesanan pasien"""
-    # Check permission - hanya staff/superuser
-    # Allow staff, superuser, or users with role 'admin' or 'dokter'
+    # Check permission - hanya staff/superuser atau admin roles
+    # Allow staff, superuser, or users with role 'admin', 'admin_sistem', 'admin_poliklinik' or 'dokter'
     user_role = getattr(request.user, 'role', None)
-    if not (request.user.is_staff or request.user.is_superuser or user_role in ('admin', 'dokter')):
+    if not (request.user.is_staff or request.user.is_superuser or user_role in ('admin', 'dokter', 'admin_sistem', 'admin_poliklinik')):
         messages.error(request, 'Anda tidak memiliki akses.')
         return redirect('pharmacy:order_list')
     
@@ -431,8 +691,9 @@ def patient_orders(request, patient_id=None):
 @login_required
 def admin_order_detail(request, pk):
     """View untuk admin/dokter melihat detail pesanan pasien"""
-    # Check permission - hanya staff/superuser
-    if not (request.user.is_staff or request.user.is_superuser):
+    # Check permission - hanya staff/superuser atau admin roles
+    user_role = getattr(request.user, 'role', None)
+    if not (request.user.is_staff or request.user.is_superuser or user_role in ('admin','admin_sistem','admin_poliklinik')):
         messages.error(request, 'Anda tidak memiliki akses.')
         return redirect('pharmacy:order_list')
     

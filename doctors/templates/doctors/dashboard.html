@@ -16,9 +16,11 @@
         <div>
             <a href="{% url 'doctors:consultations' %}" class="btn btn-outline-primary">Lihat Semua Konsultasi</a>
             <a href="{% url 'doctors:appointments' %}" class="btn btn-outline-success">Lihat Semua Janji Temu</a>
-            <a href="{% url 'doctors:poliklinik_manage' %}" class="btn btn-outline-warning">🏥 Kelola Poliklinik</a>
-            <a href="{% url 'doctors:slot_manage' %}" class="btn btn-outline-info">📅 Kelola Slot</a>
-            <a href="{% url 'doctors:queue_manage' %}" class="btn btn-outline-secondary">🎫 Kelola Antrian</a>
+            {% if request.user.role == 'admin_poliklinik' %}
+                <a href="{% url 'adminpanel:poliklinik_dashboard' %}" class="btn btn-outline-warning">Admin Poliklinik Dashboard</a>
+            {% else %}
+                <span class="text-muted ms-2">Pengelolaan jadwal, slot, dan antrian dilakukan oleh <strong>Admin Poliklinik</strong>. Silakan hubungi admin jika butuh perubahan.</span>
+            {% endif %}
         </div>
     </div>
 

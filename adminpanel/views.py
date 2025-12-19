@@ -10,10 +10,19 @@ from pharmacy.forms import MedicineForm
 from articles.models import Article
 from .models import ActivityLog
 from .forms import UserForm, DoctorForm
+from poliklinik.models import Poliklinik
+from appointments.models import AppointmentSlot, Queue
+from django.utils import timezone
+from datetime import date
 
 
 def is_admin(user):
-    return user.is_superuser or getattr(user, 'role', None) == 'admin'
+    # Admin dashboard accessible to system admins only
+    return user.is_superuser or getattr(user, 'role', None) in ('admin', 'admin_sistem')
+
+
+def is_poliklinik_admin(user):
+    return user.is_superuser or getattr(user, 'role', None) in ('admin_poliklinik', 'admin_sistem')
 
 
 @login_required
@@ -110,14 +119,144 @@ def user_delete(request, pk):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_poliklinik_admin)
 def doctor_list(request):
     doctors = Doctor.objects.select_related('user', 'poliklinik').order_by('-id')
     return render(request, 'adminpanel/doctor_list.html', {'doctors': doctors, 'title': 'Kelola Dokter'})
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_poliklinik_admin)
+def poliklinik_dashboard(request):
+    """Dashboard khusus untuk Admin Poliklinik"""
+    doctors = Doctor.objects.select_related('user', 'poliklinik').order_by('-id')
+    pending_payments = MedicineOrder.objects.filter(payment_status='pending').order_by('-created_at')[:12]
+    recent_consultations = Consultation.objects.select_related('patient').order_by('-date')[:12]
+
+    context = {
+        'doctors': doctors,
+        'pending_payments': pending_payments,
+        'recent_consultations': recent_consultations,
+        'title': 'Dashboard Admin Poliklinik',
+    }
+    return render(request, 'adminpanel/poliklinik_dashboard.html', context)
+
+
+@login_required
+@user_passes_test(is_poliklinik_admin)
+def poliklinik_manage(request, poliklinik_id):
+    poliklinik = get_object_or_404(Poliklinik, pk=poliklinik_id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'open':
+            poliklinik.force_open = True
+            poliklinik.force_close = False
+            poliklinik.save(update_fields=['force_open', 'force_close'])
+            messages.success(request, f"Poliklinik {poliklinik.name} telah dibuka.")
+        elif action == 'close':
+            poliklinik.force_open = False
+            poliklinik.force_close = True
+            poliklinik.save(update_fields=['force_open', 'force_close'])
+            messages.success(request, f"Poliklinik {poliklinik.name} telah ditutup.")
+        elif action == 'auto':
+            poliklinik.force_open = False
+            poliklinik.force_close = False
+            poliklinik.save(update_fields=['force_open', 'force_close'])
+            messages.success(request, f"Poliklinik {poliklinik.name} mengikuti jadwal otomatis.")
+        return redirect('adminpanel:poliklinik_manage', poliklinik_id=poliklinik.id)
+
+    context = {'poliklinik': poliklinik, 'is_open': poliklinik.is_currently_open()}
+    return render(request, 'adminpanel/poliklinik_manage.html', context)
+
+
+@login_required
+@user_passes_test(is_poliklinik_admin)
+def slot_manage(request, poliklinik_id):
+    poliklinik = get_object_or_404(Poliklinik, pk=poliklinik_id)
+    today = date.today()
+    slots = AppointmentSlot.objects.filter(poliklinik=poliklinik, date__gte=today).order_by('date', 'start_time')
+    doctors_qs = Doctor.objects.filter(poliklinik=poliklinik).select_related('user')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        slot_id = request.POST.get('slot_id')
+        if action == 'create':
+            doctor_id = int(request.POST.get('doctor_id'))
+            slot_date = request.POST.get('date')
+            start_time = request.POST.get('start_time')
+            end_time = request.POST.get('end_time')
+            quota = int(request.POST.get('quota', 10))
+            doctor = get_object_or_404(Doctor, pk=doctor_id)
+            AppointmentSlot.objects.create(
+                doctor=doctor,
+                poliklinik=poliklinik,
+                date=slot_date,
+                start_time=start_time,
+                end_time=end_time,
+                quota=quota
+            )
+            messages.success(request, 'Slot janji temu berhasil ditambahkan.')
+        elif action == 'delete' and slot_id:
+            slot = get_object_or_404(AppointmentSlot, id=slot_id, poliklinik=poliklinik)
+            if slot.appointments.exists():
+                messages.error(request, 'Slot tidak dapat dihapus karena sudah ada janji temu.')
+            else:
+                slot.delete()
+                messages.success(request, 'Slot berhasil dihapus.')
+        elif action == 'update_quota' and slot_id:
+            slot = get_object_or_404(AppointmentSlot, id=slot_id, poliklinik=poliklinik)
+            new_quota = int(request.POST.get('quota', slot.quota))
+            if new_quota < slot.used_quota():
+                messages.error(request, 'Quota tidak boleh kurang dari jumlah janji yang sudah ada.')
+            else:
+                slot.quota = new_quota
+                slot.save()
+                messages.success(request, 'Quota slot berhasil diupdate.')
+        return redirect('adminpanel:poliklinik_slot_manage', poliklinik_id=poliklinik.id)
+
+    context = {'poliklinik': poliklinik, 'slots': slots, 'doctors': doctors_qs, 'today': today}
+    return render(request, 'adminpanel/slot_manage.html', context)
+
+
+@login_required
+@user_passes_test(is_poliklinik_admin)
+def queue_manage(request, poliklinik_id):
+    poliklinik = get_object_or_404(Poliklinik, pk=poliklinik_id)
+    today = date.today()
+    queues = Queue.objects.filter(poliklinik=poliklinik, appointment__date=today, status__in=[Queue.STATUS_WAITING, Queue.STATUS_CHECKED_IN, Queue.STATUS_IN_PROGRESS]).select_related('patient', 'appointment', 'doctor').order_by('queue_number')
+    current_queue = Queue.objects.filter(poliklinik=poliklinik, appointment__date=today, status=Queue.STATUS_IN_PROGRESS).first()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        queue_id = request.POST.get('queue_id')
+        if action == 'next' and queue_id:
+            if current_queue:
+                current_queue.status = Queue.STATUS_COMPLETED
+                current_queue.completed_at = timezone.now()
+                current_queue.save()
+            next_queue = get_object_or_404(Queue, id=queue_id, poliklinik=poliklinik)
+            next_queue.status = Queue.STATUS_IN_PROGRESS
+            next_queue.started_at = timezone.now()
+            next_queue.save()
+            messages.success(request, f"Antrian #{next_queue.queue_number} sekarang sedang dilayani.")
+        elif action == 'confirm_checkin' and queue_id:
+            queue = get_object_or_404(Queue, id=queue_id, poliklinik=poliklinik)
+            if queue.status == Queue.STATUS_WAITING:
+                queue.status = Queue.STATUS_CHECKED_IN
+                queue.checked_in_at = timezone.now()
+                queue.save()
+                messages.success(request, f"Check in pasien antrian #{queue.queue_number} dikonfirmasi.")
+            else:
+                messages.error(request, "Pasien sudah check in sebelumnya.")
+        return redirect('adminpanel:poliklinik_queue_manage', poliklinik_id=poliklinik.id)
+
+    context = {'poliklinik': poliklinik, 'queues': queues, 'current_queue': current_queue, 'today': today}
+    return render(request, 'adminpanel/queue_manage.html', context)
+
+
+@login_required
+@user_passes_test(is_poliklinik_admin)
 def doctor_create(request):
     if request.method == 'POST':
         form = DoctorForm(request.POST)
@@ -137,7 +276,7 @@ def doctor_create(request):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_poliklinik_admin)
 def doctor_edit(request, pk):
     doctor = get_object_or_404(Doctor, pk=pk)
     if request.method == 'POST':
@@ -153,7 +292,7 @@ def doctor_edit(request, pk):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_poliklinik_admin)
 def doctor_delete(request, pk):
     doctor = get_object_or_404(Doctor, pk=pk)
     if request.method == 'POST':

@@ -122,9 +122,12 @@
             <!-- Aksi -->
             <div class="mt-4">
                 {% if order.status == 'pending' and items %}
-                <a href="{% url 'pharmacy:order_confirm' order.pk %}" class="btn btn-success btn-lg">
-                    <i class="fas fa-check"></i> Konfirmasi Pesanan
-                </a>
+                <form action="{% url 'pharmacy:order_confirm' order.pk %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-check"></i> Konfirmasi Pesanan
+                    </button>
+                </form>
                 {% endif %}
                 
                 <a href="{% url 'pharmacy:order_list' %}" class="btn btn-secondary btn-lg">

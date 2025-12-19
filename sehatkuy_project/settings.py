@@ -190,6 +190,17 @@ GOOGLE_MAPS_API_KEY = "ISI_DENGAN_API_KEY_ANDA"
 
 
 # ==============================
+# IPAYMU SANDBOX / PAYMENT CONFIG
+# ==============================
+IPAYMU_SANDBOX = True
+IPAYMU_API_KEY = os.environ.get('IPAYMU_API_KEY', 'SANDBOX9910ADFD-D8D3-4C8D-BFB5-20B8C21450EE')
+IPAYMU_VA = os.environ.get('IPAYMU_VA', '0000005267071757')
+# Default sandbox API endpoint (override via env if needed)
+IPAYMU_API_URL = os.environ.get('IPAYMU_API_URL', 'https://sandbox.ipaymu.com/api/v2/payment')
+# Optional secret used to sign requests (use a dedicated secret in production)
+IPAYMU_API_SECRET = os.environ.get('IPAYMU_API_SECRET', IPAYMU_API_KEY)
+
+# ==============================
 # DEFAULT FIELD TYPE
 # ==============================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

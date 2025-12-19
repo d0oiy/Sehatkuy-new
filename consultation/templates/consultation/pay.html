@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Pembayaran Konsultasi{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-body">
+            <h4 class="mb-3">Pembayaran Konsultasi</h4>
+            <p>Nomor Konsultasi: <strong>{{ consultation.id }}</strong></p>
+            <p>Jumlah yang harus dibayar: <strong>{{ consultation.fee }}</strong></p>
+            <form method="post">{% csrf_token %}
+                <button type="submit" class="btn btn-success">Bayar Sekarang (Demo Gateway)</button>
+                <a href="{% url 'consultation:consultation_chat' consultation.doctor.id %}" class="btn btn-secondary">Kembali</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

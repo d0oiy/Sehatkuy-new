@@ -5,7 +5,9 @@ class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('pasien', 'Pasien'),
         ('dokter', 'Dokter'),
-        ('admin', 'Admin'),
+        ('admin_sistem', 'Admin Sistem'),
+        ('admin_poliklinik', 'Admin Poliklinik'),
+        ('admin', 'Admin'),  # backwards compatibility
     )
 
     phone = models.CharField(max_length=20, blank=True, null=True)

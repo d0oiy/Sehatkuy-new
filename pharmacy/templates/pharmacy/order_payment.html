@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load currency_filters %}
+{% block title %}Pembayaran Pesanan{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-body">
+            <h4 class="mb-3">Pembayaran Pesanan {{ order.order_number }}</h4>
+            <h3 class="text-success">{{ order.total_price|rupiah }}</h3>
+
+            {% if payment_status == 'paid' %}
+                <div class="alert alert-success">Pembayaran telah tercatat (LUNAS).</div>
+            {% else %}
+                        {% if payment_qr_url %}
+                        <div class="alert alert-info text-center">
+                            <p>Silakan pindai QRIS berikut untuk melakukan pembayaran:</p>
+                            <div class="mb-3">
+                                <img src="{{ payment_qr_url }}" alt="QRIS" style="max-width: 100%; height: auto;" />
+                            </div>
+                            <p><small class="text-muted">atau buka <a href="{{ payment_qr_url }}" target="_blank">tautan QRIS</a></small></p>
+                        </div>
+                        {% elif payment_url %}
+                        <div class="alert alert-info">
+                            <p>Silakan lanjutkan pembayaran melalui tautan pembayaran berikut:</p>
+                            <a href="{{ payment_url }}" class="btn btn-primary" target="_blank">Bayar Sekarang</a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <p>Silakan melakukan pembayaran ke Virtual Account berikut: <strong>{{ ipaymu_va }}</strong></p>
+                            <p>Atau klik tombol di bawah untuk membuat permintaan pembayaran (menghubungi penyedia pembayaran).</p>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <form method="post" action="{% url 'pharmacy:order_create_ipaymu' order.pk %}" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Mohon tunggu...';">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success">Buat Permintaan Pembayaran (Ipaymu)</button>
+                            </form>
+
+                            <form method="post" action="{% url 'pharmacy:order_create_qris' order.pk %}" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Mohon tunggu...';">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning">Bayar via QRIS</button>
+                            </form>
+                        </div>
+
+                        <form method="post" action="{% url 'pharmacy:order_cancel' order.pk %}" class="mt-3">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Batalkan Pesanan</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+
+            <a href="{% url 'pharmacy:order_detail' order.pk %}" class="btn btn-secondary mt-3">Kembali ke Pesanan</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

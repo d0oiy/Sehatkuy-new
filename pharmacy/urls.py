@@ -22,8 +22,13 @@ urlpatterns = [
     
     # Admin/Dokter viewing patient orders
     path('admin/patients/', views.patient_orders, name='patient_orders'),
+    path('orders/<int:pk>/ipaymu/', views.create_ipaymu_payment, name='order_create_ipaymu'),
+    path('orders/<int:pk>/qris/', views.create_ipaymu_qris, name='order_create_qris'),
     path('admin/patients/<int:patient_id>/orders/', views.patient_orders, name='patient_orders_detail'),
     path('admin/orders/<int:pk>/', views.admin_order_detail, name='admin_order_detail'),
+    path('orders/<int:pk>/payment/', views.order_payment, name='order_payment'),
+    path('orders/<int:pk>/cancel/', views.order_cancel, name='order_cancel'),
+    path('admin/orders/<int:pk>/verify-payment/', views.admin_verify_payment, name='admin_verify_payment'),
     
     # Delivery & Map URLs
     path('delivery/<int:order_id>/map/', views.delivery_map, name='delivery_map'),

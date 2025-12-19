@@ -3,6 +3,10 @@ from . import views
 
 urlpatterns = [
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('poliklinik/', views.poliklinik_dashboard, name='poliklinik_dashboard'),
+    path('poliklinik/<int:poliklinik_id>/manage/', views.poliklinik_manage, name='poliklinik_manage'),
+    path('poliklinik/<int:poliklinik_id>/slots/', views.slot_manage, name='poliklinik_slot_manage'),
+    path('poliklinik/<int:poliklinik_id>/queue/', views.queue_manage, name='poliklinik_queue_manage'),
 
     # User CRUD
     path('users/', views.user_list, name='user_list'),

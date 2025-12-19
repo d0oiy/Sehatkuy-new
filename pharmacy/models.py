@@ -55,7 +55,16 @@ class MedicineOrder(models.Model):
     patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='medicine_orders')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='Status')
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    delivery_address = models.TextField(verbose_name='Alamat Pengiriman')
+
+    # Payment fields
+    payment_status = models.CharField(max_length=20, choices=[('unpaid','Belum Bayar'), ('pending','Menunggu Verifikasi'), ('paid','Lunas'), ('failed','Gagal')], default='unpaid')
+    payment_proof = models.FileField(upload_to='payments/orders/', null=True, blank=True)
+    payment_transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    payment_url = models.CharField(max_length=1024, null=True, blank=True)
+    payment_qr_url = models.CharField(max_length=1024, null=True, blank=True)
+
+    delivery_address = models.TextField(verbose_name='Alamat Pengiriman' )
     delivery_phone = models.CharField(max_length=15, verbose_name='Nomor Telepon Pengiriman')
     delivery_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name='Latitude Pengiriman')
     delivery_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name='Longitude Pengiriman')
