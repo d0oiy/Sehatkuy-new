@@ -55,6 +55,7 @@ INSTALLED_APPS = [
 # ==============================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -127,10 +128,23 @@ USE_TZ = True
 # ==============================
 # STATIC FILES
 # ==============================
-STATIC_URL = 'static/'
+# URL to use when referring to static files located in STATIC_ROOT.
+STATIC_URL = '/static/'
+
+# During development, additional static files can be placed in the project
+# level `static/` directory listed below. In production we collect all static
+# files into `STATIC_ROOT` with `collectstatic` and serve them from there.
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+# Directory where `manage.py collectstatic` will collect static files for
+# production. Railway (and other PaaS) should run `collectstatic` during
+# deployment so the web server (or WhiteNoise) can serve them.
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Use WhiteNoise storage backend to serve compressed, cache-friendly files.
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # ==============================
