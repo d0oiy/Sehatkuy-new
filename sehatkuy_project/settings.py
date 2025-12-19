@@ -3,21 +3,15 @@ Django settings for sehatkuy_project project.
 """
 
 import os
-import dj_database_url
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+SECRET_KEY = 'django-insecure-4_+vx3%uwzxut#&h8hfopiu2w32b6b2n^w4jvn4vv85l(@y#7x'
 
+DEBUG = True
 
-DEBUG = False
-
-ALLOWED_HOSTS = [
-    ".railway.app",
-    "localhost",
-    "127.0.0.1",
-]
+ALLOWED_HOSTS = ['*']
 
 
 # ==============================
@@ -95,13 +89,18 @@ WSGI_APPLICATION = 'sehatkuy_project.wsgi.application'
 # DATABASE
 # ==============================
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-    )
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ.get("MYSQL_DATABASE"),
+        "USER": os.environ.get("MYSQLUSER"),
+        "PASSWORD": os.environ.get("MYSQLPASSWORD"),
+        "HOST": os.environ.get("MYSQLHOST", "localhost"),
+        "PORT": os.environ.get("MYSQLPORT", "3306"),
+        "OPTIONS": {
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'"
+        },
+    }
 }
-
-
 
 
 # ==============================
@@ -130,10 +129,10 @@ USE_TZ = True
 # ==============================
 # STATIC FILES
 # ==============================
-
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 
 # ==============================
@@ -156,7 +155,6 @@ CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 
 CSRF_TRUSTED_ORIGINS = [
-     "https://*.railway.app",
     "http://127.0.0.1:8000",
     "http://localhost:8000"
 ]
@@ -206,4 +204,6 @@ IPAYMU_API_SECRET = os.environ.get('IPAYMU_API_SECRET', IPAYMU_API_KEY)
 # ==============================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
+print("MYSQLHOST =", os.environ.get("MYSQLHOST"))
+print("MYSQLPORT =", os.environ.get("MYSQLPORT"))
+print("MYSQL_DATABASE =", os.environ.get("MYSQL_DATABASE"))
