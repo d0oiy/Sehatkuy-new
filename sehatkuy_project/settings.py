@@ -18,6 +18,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://sehatkuy-new-production.up.railway.app",
+]
+
+
 
 # ==============================
 # APPLICATIONS
